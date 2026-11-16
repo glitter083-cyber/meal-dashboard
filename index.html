@@ -209,8 +209,40 @@
   .slot.lunch{background:var(--green-soft);color:var(--green)}
   .slot.dinner{background:var(--accent-soft);color:#A6542F}
   .meal-text{font-size:14px;line-height:1.5;color:var(--ink);word-break:keep-all}
+  .meal-text.empty{color:var(--ink3);font-weight:600}
   .meal-row.done .meal-text{color:var(--ink3);text-decoration:line-through;text-decoration-thickness:1px}
   .meal-row.done{opacity:.78}
+
+  /* ── 끼니 인라인 수정 ─────────────────── */
+  .meal-line{display:flex;align-items:stretch;border-top:1px solid #F8F1E9}
+  .day-head + .meal-line{border-top:0}
+  .meal-line .meal-row{flex:1 1 auto;min-width:0;border-top:0}
+  .meal-edit-btn{
+    flex:0 0 auto;width:44px;padding:0;border:0;border-left:1px solid #F8F1E9;
+    background:transparent;color:var(--ink3);font-size:15px;line-height:1;
+  }
+  .meal-edit-btn:active{background:#FDF8F2}
+  .meal-detail{display:block;margin-top:3px;font-size:12px;line-height:1.45;color:var(--ink2);word-break:keep-all}
+  .meal-row.done .meal-detail{color:var(--ink3)}
+  .meal-edit{padding:12px 14px 13px;border-top:1px solid #F8F1E9;background:#FFFDFA}
+  .day-head + .meal-edit{border-top:0}
+  .meal-edit .slot{margin-bottom:6px}
+  .meal-edit .fld{
+    display:block;width:100%;padding:10px 12px;border-radius:11px;border:1px solid var(--line2);
+    background:#fff;color:var(--ink);font-family:inherit;font-size:16px;line-height:1.45;
+    -webkit-appearance:none;appearance:none;
+  }
+  .meal-edit textarea.fld{min-height:66px;resize:vertical}
+  .meal-edit .me-actions{display:flex;gap:7px;margin-top:9px}
+  .meal-edit .me-btn{
+    flex:0 0 auto;padding:10px 14px;border-radius:10px;border:1px solid var(--line2);
+    background:#fff;color:var(--ink2);font-size:13px;font-weight:700;
+  }
+  .meal-edit .me-btn:active{background:#F8F1E8}
+  .meal-edit .me-btn.save{flex:1 1 auto;border-color:var(--accent);background:var(--accent);color:#fff;font-size:14px;font-weight:800}
+  .meal-edit .me-btn.save:active{background:#AE5733}
+  .meal-edit .me-btn.reset{color:var(--ink3);border-style:dashed}
+  .meal-edit .me-hint{font-size:11px;color:var(--ink3);margin:8px 2px 0;line-height:1.4}
 
   /* ── 목록(재고·장볼 것) ────────────────── */
   .item-list{display:flex;flex-direction:column;gap:8px}
@@ -624,7 +656,8 @@
 /* ============================================================================
    우리집 식탁 · 이번 주 식단 & 장보기 대시보드
    - 외부 라이브러리/CDN 없이 단일 파일로 동작합니다(오프라인 OK).
-   - 체크 상태·직접 추가 항목·오프라인 장보기·가져온 주문은 localStorage에 저장됩니다.
+   - 체크 상태·직접 고친 식단(끼니별 ✏️ 수정)·직접 추가 항목·오프라인 장보기·가져온 주문은
+     localStorage에 저장됩니다.
    - 새 장보기 내역으로 갈아끼우는 방법은 두 가지입니다.
      1) [가계부] 탭 → 온라인 주문내역 가져오기 (JSON 붙여넣기 / 파일)
      2) 아래 INITIAL_DATA를 직접 고치고 version을 새 날짜로 바꾼 뒤 [↺ 초기화]
@@ -791,7 +824,7 @@ window.MEAL_DASHBOARD = (function () {
   const TABS = ["meals", "inv", "shop", "ledger", "receipt"];
 
   let state = null;
-  const ui = { tab: "meals", invCat: "all", invQuery: "", favOnly: false };
+  const ui = { tab: "meals", invCat: "all", invQuery: "", favOnly: false, editing: null };
 
   /* ── 작은 도우미 ─────────────────────────────────────────────────── */
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
@@ -816,6 +849,9 @@ window.MEAL_DASHBOARD = (function () {
   }
   function uid(prefix) { return prefix + "-" + Date.now().toString(36) + "-" + Math.floor(Math.random() * 1e4); }
   function keyName(s) { return String(s || "").replace(/\s+/g, "").toLowerCase(); }
+  function cleanLine(s) {
+    return String(s == null ? "" : s).replace(/[\r\n]+/g, " ").replace(/\s{2,}/g, " ").trim();
+  }
 
   /* ── 저장 ────────────────────────────────────────────────────────── */
   function defaultState() {
@@ -824,7 +860,7 @@ window.MEAL_DASHBOARD = (function () {
     });
     return {
       version: INITIAL_DATA.version, tab: "meals",
-      meals: {}, out: {}, custom: [], shop: shop,
+      meals: {}, mealEdits: {}, out: {}, custom: [], shop: shop,
       favs: INITIAL_DATA.favs.slice(),
       offline: [], importedOrders: [], baseline: null
     };
@@ -840,6 +876,7 @@ window.MEAL_DASHBOARD = (function () {
         version: INITIAL_DATA.version,
         tab: saved.tab || "meals",
         meals: saved.meals || {},
+        mealEdits: (saved.mealEdits && typeof saved.mealEdits === "object") ? saved.mealEdits : {},
         out: saved.out || {},
         custom: Array.isArray(saved.custom) ? saved.custom : [],
         shop: Array.isArray(saved.shop) ? saved.shop : def.shop,
@@ -875,11 +912,13 @@ window.MEAL_DASHBOARD = (function () {
   function allOrders() {
     /* 구매내역: 기본 온라인 주문 + 가져온 온라인 주문 + 오프라인 장보기 */
     const rows = [];
-    rows.push({
-      id: "base", kind: "online", store: baseOrder().store, date: baseOrder().orderedAt,
-      label: baseOrder().orderedAtLabel || baseOrder().orderedAt,
-      count: baseOrder().count, paid: baseOrder().paid, deletable: false
-    });
+    if (Number(baseOrder().paid) || Number(baseOrder().count)) {
+      rows.push({
+        id: "base", kind: "online", store: baseOrder().store, date: baseOrder().orderedAt,
+        label: baseOrder().orderedAtLabel || baseOrder().orderedAt,
+        count: baseOrder().count, paid: baseOrder().paid, deletable: false
+      });
+    }
     state.importedOrders.forEach(function (o) {
       rows.push({
         id: o.id, kind: "online", imported: true, store: o.store, date: o.date,
@@ -906,6 +945,38 @@ window.MEAL_DASHBOARD = (function () {
   }
   function invOwned(id) { return !state.out[id]; }
   function mealKey(date, slot) { return date + "|" + slot; }
+  /* 끼니 화면에 보일 내용(기본 식단 + 직접 고진 내용) */
+  function mealView(date, m) {
+    const e = state.mealEdits[mealKey(date, m.slot)];
+    return {
+      text: (e && typeof e.text === "string") ? e.text : (m.text || ""),
+      detail: (e && typeof e.detail === "string") ? e.detail : (m.detail || "")
+    };
+  }
+  /* INITIAL_DATA 원본 끼니 찾기 (되돌리기·변경 없음 판단용) */
+  function originalMeal(key) {
+    const p = String(key).split("|");
+    let found = null;
+    INITIAL_DATA.mealPlan.forEach(function (d) {
+      if (d.date !== p[0]) return;
+      d.meals.forEach(function (m) { if (m.slot === p[1]) found = m; });
+    });
+    return found;
+  }
+  /* 수정 내용이 반영된 이번 주 식단 (내보내기·백업용) */
+  function effectiveMealPlan() {
+    return INITIAL_DATA.mealPlan.map(function (d) {
+      return {
+        date: d.date, day: d.day,
+        meals: d.meals.map(function (m) {
+          const v = mealView(d.date, m);
+          const out = { slot: m.slot, text: v.text };
+          if (v.detail) out.detail = v.detail;
+          return out;
+        })
+      };
+    });
+  }
   function mealStats() {
     let total = 0, done = 0;
     INITIAL_DATA.mealPlan.forEach(function (d) {
@@ -961,8 +1032,11 @@ window.MEAL_DASHBOARD = (function () {
   function renderBanner() {
     const o = baseOrder();
     const today = todayISO();
-    const when = (today === o.orderedAt) ? ("오늘 " + o.deliveryTime + " 도착 예정") : (shortDate(o.orderedAt) + " " + o.deliveryLabel);
-    const tune = (today === o.orderedAt) ? "🚚" : "🛒";
+    const hasOrder = !!(Number(o.paid) || Number(o.count));
+    const when = !hasOrder
+      ? "장보기 내역을 넣어 보세요"
+      : ((today === o.orderedAt) ? ("오늘 " + o.deliveryTime + " 도착 예정") : (shortDate(o.orderedAt) + " " + o.deliveryLabel));
+    const tune = !hasOrder ? "🧺" : ((today === o.orderedAt) ? "🚚" : "🛒");
     const stats = mealStats();
     const c = costSummary();
     const perMealTxt = c.perMealSpent != null
@@ -1022,13 +1096,32 @@ window.MEAL_DASHBOARD = (function () {
         const done = !!state.meals[key];
         if (done) doneN++;
         const cls = SLOT_CLASS[m.slot] || "dinner";
-        return '<button class="meal-row' + (done ? " done" : "") + '" type="button" data-act="meal" data-key="' + esc(key) + '" aria-pressed="' + (done ? "true" : "false") + '">' +
-            '<span class="check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4.5 12.5 9.5 17.5 19.5 7"/></svg></span>' +
-            '<span class="meal-body">' +
-              '<span class="slot ' + cls + '">' + esc(m.slot) + "</span>" +
-              '<span class="meal-text" style="display:block">' + esc(m.text) + "</span>" +
-            "</span>" +
-          "</button>";
+        const view = mealView(d.date, m);
+        const edited = !!state.mealEdits[key];
+        if (ui.editing === key) {
+          return '<div class="meal-edit" data-key="' + esc(key) + '">' +
+              '<span class="slot ' + cls + '">' + esc(m.slot) + " 수정</span>" +
+              '<textarea class="fld" id="meEditText" rows="2" aria-label="' + esc(m.slot) + ' 메뉴">' + esc(view.text) + "</textarea>" +
+              '<input class="fld" id="meEditDetail" type="text" style="margin-top:7px" placeholder="메모 (선택 · 예: 아이는 안 맵게)" value="' + esc(view.detail) + '" aria-label="' + esc(m.slot) + ' 메모">' +
+              '<div class="me-actions">' +
+                '<button class="me-btn save" type="button" data-act="meal-save" data-key="' + esc(key) + '">저장</button>' +
+                '<button class="me-btn" type="button" data-act="meal-cancel" data-key="' + esc(key) + '">취소</button>' +
+                (edited ? '<button class="me-btn reset" type="button" data-act="meal-reset" data-key="' + esc(key) + '">되돌리기</button>' : "") +
+              "</div>" +
+              '<p class="me-hint">저장하면 바로 반영되고 이 기기에 기억돼요. 백업(JSON)에도 함께 담겨요.</p>' +
+            "</div>";
+        }
+        return '<div class="meal-line">' +
+            '<button class="meal-row' + (done ? " done" : "") + '" type="button" data-act="meal" data-key="' + esc(key) + '" aria-pressed="' + (done ? "true" : "false") + '">' +
+              '<span class="check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4.5 12.5 9.5 17.5 19.5 7"/></svg></span>' +
+              '<span class="meal-body">' +
+                '<span class="slot ' + cls + '">' + esc(m.slot) + "</span>" +
+                '<span class="meal-text' + (view.text ? "" : " empty") + '" style="display:block">' + (view.text ? esc(view.text) : "메뉴를 적어 보세요 ✏️") + "</span>" +
+                (view.detail ? '<span class="meal-detail">' + esc(view.detail) + "</span>" : "") +
+              "</span>" +
+            "</button>" +
+            '<button class="meal-edit-btn" type="button" data-act="meal-edit" data-key="' + esc(key) + '" aria-label="' + esc(m.slot) + ' 식단 수정" title="수정">✏️</button>' +
+          "</div>";
       }).join("");
 
       const isToday = d.date === today;
@@ -1315,6 +1408,52 @@ window.MEAL_DASHBOARD = (function () {
     renderLedger();
     renderBanner();
   }
+
+  /* ── 동작: 끼니 인라인 수정 ──────────────────────────────────────── */
+  function startMealEdit(key) {
+    ui.editing = key;
+    renderMeals();
+    const t = document.getElementById("meEditText");
+    if (t && t.focus) {
+      try {
+        t.focus();
+        if (t.setSelectionRange && typeof t.value === "string") t.setSelectionRange(t.value.length, t.value.length);
+      } catch (e) { /* 포커스 불가 시 무시 */ }
+    }
+  }
+  function cancelMealEdit() {
+    ui.editing = null;
+    renderMeals();
+  }
+  function saveMealEdit(key) {
+    const tEl = document.getElementById("meEditText");
+    const dEl = document.getElementById("meEditDetail");
+    const text = cleanLine(tEl ? tEl.value : "");
+    const detail = cleanLine(dEl ? dEl.value : "");
+    if (!text) {
+      toast("메뉴를 한 글자 이상 입력해 주세요.");
+      if (tEl && tEl.focus) tEl.focus();
+      return false;
+    }
+    const orig = originalMeal(key);
+    const origText = cleanLine(orig ? orig.text : "");
+    const origDetail = cleanLine(orig ? orig.detail : "");
+    if (text === origText && detail === origDetail) delete state.mealEdits[key];
+    else state.mealEdits[key] = { text: text, detail: detail };
+    ui.editing = null;
+    saveState();
+    renderMeals();
+    toast("식단을 저장했어요");
+    return true;
+  }
+  function resetMealEdit(key) {
+    delete state.mealEdits[key];
+    saveState();
+    renderMeals();
+    const t = document.getElementById("meEditText");
+    if (t && t.focus) t.focus();
+    toast("처음 식단으로 되돌렸어요");
+  }
   function toggleInv(id) {
     if (state.out[id]) delete state.out[id];
     else state.out[id] = true;
@@ -1480,7 +1619,10 @@ window.MEAL_DASHBOARD = (function () {
         inventory: items.length ? items : baseInventory()
       };
       if (order) state.importedOrders = [];
-      if (full && payload.mealPlan) INITIAL_DATA.mealPlan = payload.mealPlan;
+      if (full && (payload.mealPlan || payload.mealEdits)) {
+        if (payload.mealPlan) INITIAL_DATA.mealPlan = payload.mealPlan;
+        state.mealEdits = (payload.mealEdits && typeof payload.mealEdits === "object") ? payload.mealEdits : {};
+      }
       /* 전체 백업이면 사용자 데이터도 함께 복원 */
       if (full) {
         if (Array.isArray(payload.shopping)) state.shop = payload.shopping;
@@ -1511,6 +1653,7 @@ window.MEAL_DASHBOARD = (function () {
       setStatus("importStatus", "합쳤어요 · 주문 " + (order ? "1건 추가" : "없음") + ", 새 품목 " + num(added) + "건 (중복 제외)", true);
     }
     saveState();
+    ui.editing = null;
     renderAll();
     return true;
   }
@@ -1523,7 +1666,8 @@ window.MEAL_DASHBOARD = (function () {
         order: baseOrder(),
         categories: INITIAL_DATA.categories,
         inventory: baseInventory(),
-        mealPlan: INITIAL_DATA.mealPlan,
+        mealPlan: effectiveMealPlan(),
+        mealEdits: state.mealEdits,
         shopping: state.shop,
         meals: state.meals, out: state.out, custom: state.custom,
         offline: state.offline, favs: state.favs,
@@ -1623,11 +1767,12 @@ window.MEAL_DASHBOARD = (function () {
   }
 
   function resetAll() {
-    const msg = "체크한 식단·재고·장볼 목록·오프라인 장보기·가져온 주문과 직접 추가한 항목이 모두 사라지고 처음 상태로 돌아가요. 계속할까요?";
+    const msg = "체크한 식단·직접 고친 식단·재고·장볼 목록·오프라인 장보기·가져온 주문과 직접 추가한 항목이 모두 사라지고 처음 상태로 돌아가요. 계속할까요?";
     if (window.confirm && !window.confirm(msg)) return;
     state = defaultState();
     saveState();
     ui.tab = "meals";
+    ui.editing = null;
     ui.invCat = "all";
     ui.invQuery = "";
     ui.favOnly = false;
@@ -1644,6 +1789,10 @@ window.MEAL_DASHBOARD = (function () {
     const act = el.getAttribute("data-act");
     if (act === "tab") { switchTab(el.getAttribute("data-tab")); }
     else if (act === "meal") { toggleMeal(el.getAttribute("data-key")); }
+    else if (act === "meal-edit") { startMealEdit(el.getAttribute("data-key")); }
+    else if (act === "meal-save") { saveMealEdit(el.getAttribute("data-key")); }
+    else if (act === "meal-cancel") { cancelMealEdit(); }
+    else if (act === "meal-reset") { resetMealEdit(el.getAttribute("data-key")); }
     else if (act === "inv-cat") {
       ui.invCat = el.getAttribute("data-cat") || "all";
       ui.favOnly = false;
@@ -1773,10 +1922,14 @@ window.MEAL_DASHBOARD = (function () {
     renderAll: renderAll,
     importData: importData,
     exportPayload: exportPayload,
+    save: saveState,
+    toast: toast,
     getState: function () { return state; },
     helpers: {
       inventoryAll: inventoryAll, mealStats: mealStats, todayISO: todayISO,
-      weekRange: weekRange, costSummary: costSummary, allOrders: allOrders, favItems: favItems
+      weekRange: weekRange, costSummary: costSummary, allOrders: allOrders, favItems: favItems,
+      effectiveMealPlan: effectiveMealPlan, mealView: mealView, originalMeal: originalMeal,
+      editingKey: function () { return ui.editing; }
     }
   };
   window.__mealDashboard = api;
