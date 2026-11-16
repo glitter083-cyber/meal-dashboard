@@ -209,7 +209,7 @@
   .slot.lunch{background:var(--green-soft);color:var(--green)}
   .slot.dinner{background:var(--accent-soft);color:#A6542F}
   .meal-text{font-size:14px;line-height:1.5;color:var(--ink);word-break:keep-all}
-  .meal-text.empty{color:var(--ink3);font-weight:600}
+  .meal-text.is-empty{color:var(--ink3);font-weight:600}
   .meal-row.done .meal-text{color:var(--ink3);text-decoration:line-through;text-decoration-thickness:1px}
   .meal-row.done{opacity:.78}
 
@@ -1181,7 +1181,7 @@ window.MEAL_DASHBOARD = (function () {
               '<span class="check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4.5 12.5 9.5 17.5 19.5 7"/></svg></span>' +
               '<span class="meal-body">' +
                 '<span class="slot ' + cls + '">' + esc(m.slot) + "</span>" +
-                '<span class="meal-text' + (view.text ? "" : " empty") + '" style="display:block">' + (view.text ? esc(view.text) : "메뉴를 적어 보세요 ✏️") + "</span>" +
+                '<span class="meal-text' + (view.text ? "" : " is-empty") + '" style="display:block">' + (view.text ? esc(view.text) : "메뉴를 적어 보세요 ✏️") + "</span>" +
                 (view.detail ? '<span class="meal-detail">' + esc(view.detail) + "</span>" : "") +
               "</span>" +
             "</button>" +
