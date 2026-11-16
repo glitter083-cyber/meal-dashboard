@@ -1042,8 +1042,10 @@ window.MEAL_DASHBOARD = (function () {
     const hasOrder = !!(Number(o.paid) || Number(o.count));
     const when = !hasOrder
       ? "장보기 내역을 넣어 보세요"
-      : ((today === o.orderedAt) ? ("오늘 " + o.deliveryTime + " 도착 예정") : (shortDate(o.orderedAt) + " " + o.deliveryLabel));
-    const tune = !hasOrder ? "🧺" : ((today === o.orderedAt) ? "🚚" : "🛒");
+      : (o.deliveryLabel
+          ? ((today === o.orderedAt && o.deliveryTime) ? ("오늘 " + o.deliveryTime + " 도착 예정") : (shortDate(o.orderedAt) + " " + o.deliveryLabel))
+          : (shortDate(o.orderedAt) + " " + (o.store || "장보기")));
+    const tune = !hasOrder ? "🧺" : ((today === o.orderedAt && o.deliveryTime) ? "🚚" : "🛒");
     const stats = mealStats();
     const c = costSummary();
     const perMealTxt = c.perMealSpent != null
