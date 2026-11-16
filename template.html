@@ -2196,9 +2196,14 @@ window.MEAL_DASHBOARD = (function () {
       { id: "exs1", name: "양파", note: "예시 · 지워도 돼요", done: false },
       { id: "exs2", name: "김치", note: "예시 · 지워도 돼요", done: false }
     ];
+    /* 예시 메뉴는 localStorage(state.mealEdits)에 넣어 새로고침해도 남게 해요 */
     var plan = api.INITIAL_DATA.mealPlan;
-    if (plan[0] && plan[0].meals[0]) plan[0].meals[0].text = "토스트 + 우유 + 계란후라이";
-    if (plan[1] && plan[1].meals[2]) plan[1].meals[2].text = "김치찌개 + 계란말이";
+    if (plan[0] && plan[0].meals[0]) {
+      st.mealEdits[plan[0].date + "|아침"] = { text: "토스트 + 우유 + 계란후라이", detail: "" };
+    }
+    if (plan[1] && plan[1].meals[2]) {
+      st.mealEdits[plan[1].date + "|저녁"] = { text: "김치찌개 + 계란말이", detail: "" };
+    }
     api.save();
   }
 
