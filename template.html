@@ -2066,12 +2066,12 @@ window.MEAL_DASHBOARD = (function () {
   const RECIPE_BOOK = [
     /* ── 국 · 찌개 ─────────────────────────────────────── */
     { name: "된장찌개", kind: "찌개", need: ["된장|토장", "두부|순두부", "감자", "대파"] },
-    { name: "차돌박이 된장찌개", kind: "찌개", need: ["차돌박이|차돌", "된장|토장", "두부|순두부", "대파"] },
+    { name: "차돌박이 된장찌개", kind: "찌개", need: ["차돌박이|차돌", "된장|토장", "두부|순두부", "대파"], all: true },
     { name: "김치찌개", kind: "찌개", need: ["김치", "돼지고기|목살|삼겹살", "두부", "대파"] },
     { name: "순두부찌개", kind: "찌개", need: ["순두부", "계란|달걀|알찬란", "대파", "마늘"] },
-    { name: "순두부 계란국", kind: "국", need: ["순두부", "계란|달걀|알찬란", "대파"] },
+    { name: "순두부 계란국", kind: "국", need: ["순두부", "계란|달걀|알찬란", "대파"], all: true },
     { name: "콩나물국", kind: "국", need: ["콩나물", "대파", "마늘"] },
-    { name: "소고기무국", kind: "국", need: ["소고기|한우|국거리", "무", "대파", "마늘"] },
+    { name: "소고기무국", kind: "국", need: ["소고기|한우|국거리", "무", "대파", "마늘"], all: true },
     { name: "미역국", kind: "국", need: ["미역", "소고기|한우"] },
     { name: "감자국", kind: "국", need: ["감자", "대파", "마늘"] },
     { name: "시래기국", kind: "국", need: ["시래기", "된장|토장"] },
@@ -2080,14 +2080,14 @@ window.MEAL_DASHBOARD = (function () {
     { name: "동태찌개", kind: "찌개", need: ["동태", "무", "대파"] },
     { name: "부대찌개", kind: "찌개", need: ["햄|소시지", "김치", "라면|당면"] },
     { name: "짬뽕탕", kind: "찌개", need: ["짬뽕", "배추", "대파"] },
-    { name: "알배추 된장국", kind: "국", need: ["배추", "된장|토장", "대파"] },
+    { name: "알배추 된장국", kind: "국", need: ["배추", "된장|토장", "대파"], all: true },
     { name: "계란국", kind: "국", need: ["계란|달걀|알찬란", "대파", "마늘"] },
     { name: "애호박국", kind: "국", need: ["애호박", "된장|토장", "대파"] },
     { name: "어묵국", kind: "국", need: ["어묵", "대파"] },
 
     /* ── 고기 · 생선 · 두부 메인 ────────────────────── */
     { name: "소불고기", kind: "볶음", need: ["소고기|한우|불고기", "양파", "대파", "당면"] },
-    { name: "차돌박이 알배추찜", kind: "찜", need: ["차돌박이|차돌", "배추"] },
+    { name: "차돌박이 알배추찜", kind: "찜", need: ["차돌박이|차돌", "배추"], all: true },
     { name: "차돌박이 구이", kind: "구이", need: ["차돌박이|차돌", "머스타드"] },
     { name: "삼겹살 구이", kind: "구이", need: ["삼겹살", "김치"] },
     { name: "닭볶음탕", kind: "볶음", need: ["닭|닭볶음탕", "감자", "대파", "당면"] },
@@ -2097,7 +2097,7 @@ window.MEAL_DASHBOARD = (function () {
     { name: "돈가스", kind: "구이", need: ["돼지고기", "빵가루"] },
     { name: "두부조림", kind: "조림", need: ["두부", "대파", "마늘"] },
     { name: "두부부침", kind: "부침", need: ["두부"] },
-    { name: "두부김치", kind: "볶음", need: ["두부", "김치"] },
+    { name: "두부김치", kind: "볶음", need: ["두부", "김치"], all: true },
     { name: "두부 스테이크", kind: "구이", need: ["두부", "버섯|참타리"] },
     { name: "계란말이", kind: "부침", need: ["계란|달걀|알찬란"] },
     { name: "계란찜", kind: "찜", need: ["계란|달걀|알찬란", "대파"] },
@@ -2112,8 +2112,8 @@ window.MEAL_DASHBOARD = (function () {
     { name: "소시지야채볶음", kind: "볶음", need: ["소시지|햄", "양파"] },
     { name: "닭가슴살 스테이크", kind: "구이", need: ["닭가슴살"] },
     { name: "햄구이", kind: "구이", need: ["햄"] },
-    { name: "깻잎전", kind: "부침", need: ["깻잎", "계란|달걀|알찬란"] },
-    { name: "애호박전", kind: "부침", need: ["애호박", "계란|달걀|알찬란"] },
+    { name: "깻잎전", kind: "부침", need: ["깻잎", "계란|달걀|알찬란"], all: true },
+    { name: "애호박전", kind: "부침", need: ["애호박", "계란|달걀|알찬란"], all: true },
     { name: "당면잡채", kind: "볶음", need: ["당면", "배추|양파", "계란|달걀|알찬란"] },
     { name: "오징어볶음", kind: "볶음", need: ["오징어", "양파"] },
     { name: "새우볶음", kind: "볶음", need: ["새우"] },
@@ -2124,8 +2124,8 @@ window.MEAL_DASHBOARD = (function () {
     { name: "참치볶음밥", kind: "밥", need: ["참치", "계란|달걀|알찬란"] },
     { name: "스팸볶음밥", kind: "밥", need: ["스팸|햄", "계란|달걀|알찬란"] },
     { name: "야채볶음밥", kind: "밥", need: ["당근", "양파", "계란|달걀|알찬란"] },
-    { name: "참타리버섯 계란볶음밥", kind: "밥", need: ["버섯|참타리", "계란|달걀|알찬란"] },
-    { name: "스위트콘 계란볶음밥", kind: "밥", need: ["스위트콘|콘", "계란|달걀|알찬란"] },
+    { name: "참타리버섯 계란볶음밥", kind: "밥", need: ["버섯|참타리", "계란|달걀|알찬란"], all: true },
+    { name: "스위트콘 계란볶음밥", kind: "밥", need: ["스위트콘|콘", "계란|달걀|알찬란"], all: true },
     { name: "짜장밥", kind: "밥", need: ["짜장", "감자", "양파"] },
     { name: "카레밥", kind: "밥", need: ["카레", "감자", "양파"] },
     { name: "오므라이스", kind: "밥", need: ["계란|달걀|알찬란", "양파"] },
@@ -2133,7 +2133,7 @@ window.MEAL_DASHBOARD = (function () {
     { name: "무생채 비빔밥", kind: "밥", need: ["무", "계란|달걀|알찬란"] },
     { name: "유부초밥", kind: "밥", need: ["유부"] },
     { name: "김밥", kind: "밥", need: ["김", "단무지", "계란|달걀|알찬란"] },
-    { name: "참치마요덮밥", kind: "밥", need: ["참치", "마요"] },
+    { name: "참치마요덮밥", kind: "밥", need: ["참치", "마요"], all: true },
     { name: "닭고기 덮밥", kind: "밥", need: ["닭", "양파"] },
     { name: "잔치국수", kind: "면", need: ["소면|국수", "대파"] },
     { name: "비빔국수", kind: "면", need: ["소면|국수", "오이|김치"] },
@@ -2154,7 +2154,7 @@ window.MEAL_DASHBOARD = (function () {
     { name: "깻잎장아찌", kind: "반찬", need: ["깻잎"] },
     { name: "애호박볶음", kind: "반찬", need: ["애호박"] },
     { name: "버섯볶음", kind: "반찬", need: ["버섯|참타리"] },
-    { name: "콘마요", kind: "반찬", need: ["스위트콘|콘", "마요"] },
+    { name: "콘마요", kind: "반찬", need: ["스위트콘|콘", "마요"], all: true },
     { name: "감자샐러드", kind: "반찬", need: ["감자", "마요"] },
     { name: "토마토 샐러드", kind: "반찬", need: ["토마토"] },
     { name: "멸치볶음", kind: "반찬", need: ["멸치"] },
@@ -2165,14 +2165,14 @@ window.MEAL_DASHBOARD = (function () {
     { name: "감자조림", kind: "반찬", need: ["감자"] },
 
     /* ── 아침식 ─────────────────────────────────────── */
-    { name: "토스트 + 계란후라이", kind: "아침", need: ["식빵|빵", "계란|달걀|알찬란"] },
-    { name: "시리얼 + 우유", kind: "아침", need: ["시리얼|크리치오", "우유"] },
-    { name: "계란 스크램블 + 토스트", kind: "아침", need: ["계란|달걀|알찬란", "식빵|빵"] },
+    { name: "토스트 + 계란후라이", kind: "아침", need: ["식빵|빵", "계란|달걀|알찬란"], all: true },
+    { name: "시리얼 + 우유", kind: "아침", need: ["시리얼|크리치오", "우유"], all: true },
+    { name: "계란 스크램블 + 토스트", kind: "아침", need: ["계란|달걀|알찬란", "식빵|빵"], all: true },
     { name: "샌드위치", kind: "아침", need: ["식빵|빵", "햄|치즈", "계란|달걀|알찬란"] },
     { name: "계란죽", kind: "아침", need: ["계란|달걀|알찬란", "대파"] },
     { name: "야채죽", kind: "아침", need: ["당근", "애호박"] },
-    { name: "오트밀 + 우유", kind: "아침", need: ["오트밀|귀리", "우유"] },
-    { name: "요거트 + 그래놀라", kind: "아침", need: ["요플레|요거트", "시리얼|그래놀라"] },
+    { name: "오트밀 + 우유", kind: "아침", need: ["오트밀|귀리", "우유"], all: true },
+    { name: "요거트 + 그래놀라", kind: "아침", need: ["요플레|요거트", "시리얼|그래놀라"], all: true },
     { name: "간장계란밥", kind: "아침", need: ["계란|달걀|알찬란"] },
     { name: "감자전", kind: "아침", need: ["감자"] },
     { name: "감자구이", kind: "아침", need: ["감자"] },
@@ -2210,17 +2210,23 @@ window.MEAL_DASHBOARD = (function () {
   }
   function planDishScore(recipe, items) {
     const hits = [];
-    recipe.need.forEach(function (group) {
+    let core = false;
+    const r0All = !!recipe.all;
+    recipe.need.forEach(function (group, gi) {
       const alts = group.split("|");
       for (let i = 0; i < alts.length; i++) {
         let hit = false;
         for (let j = 0; j < items.length; j++) {
           if (planHasKeyword(items[j].name, alts[i])) { hit = true; break; }
         }
-        if (hit) { hits.push(alts[0]); break; }
+        if (hit) { hits.push(alts[0]); if (gi === 0) core = true; break; }
       }
     });
-    return { r: recipe, hits: hits, score: hits.length * 10 - (recipe.need.length - hits.length) };
+    /* 첫 재료는 그 메뉴의 주인공 — 없으면 메뉴 이름이 거짓말이 되니 후보에서 빼요.
+       all:true 인 메뉴는 이름에 적힌 재료가 모두 있어야 올려요 */
+    const complete = !r0All || hits.length === recipe.need.length;
+    const score = (core && complete) ? hits.length * 10 - (recipe.need.length - hits.length) : 0;
+    return { r: recipe, hits: hits, score: score };
   }
   function planPool(kinds) {
     return RECIPE_BOOK.filter(function (r) { return kinds.indexOf(r.kind) >= 0; });
@@ -2230,7 +2236,7 @@ window.MEAL_DASHBOARD = (function () {
     const list = [];
     pool.forEach(function (r) {
       const s = planDishScore(r, items);
-      if (s.score >= 10) list.push(s);
+      if (s.score > 0) list.push(s);
     });
     if (!list.length) return null;
     list.sort(function (a, b) {
@@ -2284,15 +2290,16 @@ window.MEAL_DASHBOARD = (function () {
     });
     if (!pool.length) return planFallback("간식", di);
     const n = pool.length;
-    const a = pool[(planSeq + di) % n];
-    let b = null;
+    const i = (planSeq + di) % n;
+    let j = -1;
     for (let k = 1; k < n; k++) {
-      const cand = pool[(planSeq + di + k) % n];
-      if (cand.id !== a.id && cand.name !== a.name) { b = cand; break; }
+      const idx = (i + k) % n;
+      if (pool[idx].name !== pool[i].name) { j = idx; break; }
     }
-    const parts = [a.name], hits = [a.name];
-    if (b) { parts.push(b.name); hits.push(b.name); }
-    return { text: parts.join(" + "), detail: "재고: " + hits.join(" · ") };
+    if (j < 0) return { text: pool[i].name, detail: "" };
+    /* 두 개를 고르면 순서가 날마다 뒤집히지 않게 품목 순서대로 보여요 */
+    const a = pool[Math.min(i, j)], b = pool[Math.max(i, j)];
+    return { text: a.name + " + " + b.name, detail: "재고: " + a.name + " · " + b.name };
   }
   function planBuildMeal(slot, di, items, used) {
     if (slot === "간식") return planSnack(di, items);
@@ -2312,13 +2319,17 @@ window.MEAL_DASHBOARD = (function () {
       const dish = planPick(planPool(PLAN_KINDS.lunch), items, used.lunch, used.last.lunch);
       if (!dish) return planFallback("점심", di);
       used.last.lunch = dish.r.name;
-      const side = planPick(planPool(PLAN_KINDS.side), items, used.side, used.last.side);
+      let side = planPick(planPool(PLAN_KINDS.side), items, used.side, used.last.side);
+      if (side && side.r.name === used.last.side) side = null;
       if (side) used.last.side = side.r.name;
       return planCompose([dish, side]);
     }
     const main = planPick(planPool(PLAN_KINDS.main), items, used.main, used.last.main);
-    const soup = planPick(planPool(PLAN_KINDS.soup), items, used.soup, used.last.soup);
-    const side = planPick(planPool(PLAN_KINDS.side), items, used.side, used.last.side);
+    let soup = planPick(planPool(PLAN_KINDS.soup), items, used.soup, used.last.soup);
+    let side = planPick(planPool(PLAN_KINDS.side), items, used.side, used.last.side);
+    /* 후보가 하나뿐이라 이틀 연속 같은 국·반찬이 될 상황이면 그날은 빼요 */
+    if (soup && soup.r.name === used.last.soup) soup = null;
+    if (side && side.r.name === used.last.side) side = null;
     if (main) used.last.main = main.r.name;
     if (soup) used.last.soup = soup.r.name;
     if (side) used.last.side = side.r.name;
