@@ -208,6 +208,7 @@
   .slot.morning{background:var(--amber-soft);color:var(--amber)}
   .slot.lunch{background:var(--green-soft);color:var(--green)}
   .slot.dinner{background:var(--accent-soft);color:#A6542F}
+  .slot.snack{background:var(--violet-soft);color:var(--violet)}
   .meal-text{font-size:14px;line-height:1.5;color:var(--ink);word-break:keep-all}
   .meal-text.is-empty{color:var(--ink3);font-weight:600}
   .meal-row.done .meal-text{color:var(--ink3);text-decoration:line-through;text-decoration-thickness:1px}
@@ -810,42 +811,54 @@ window.MEAL_DASHBOARD = (function () {
       { id: "s4", cat: "snack", name: "농심 닭다리 후라이드치킨맛", detail: "66g", price: 1433 }
     ],
 
-    /* ── 이번 주 식단 ───────────────────────────────────────────────────
-       meals[].slot 은 "아침" / "점심" / "저녁" 중 하나 (그 끼니를 안 먹는 날은 비웁니다) */
+    /* ── 이번 주 식단 ──────────────────────────────────────────────────────
+       월~일 7일 × 네 칸(아침 / 점심 / 저녁 / 간식) = 28칸.
+       meals[].slot 은 "아침" / "점심" / "저녁" / "간식" 중 하나이고,
+       그날 필요 없는 칸은 ✏️로 비워 두면 됩니다. */
     mealPlan: [
       {
         date: "2026-11-16", day: "월",
         meals: [
           { slot: "아침", text: "시리얼 + 요플레 + 바나나" },
-          { slot: "저녁", text: "차돌박이 알배추찜 (300g·깻잎·홀그레인머스타드) + 순두부 계란국 + 메추리알 장조림" }
+          { slot: "점심", text: "집밥 / 간단 식사 (장보기 도착 전)", detail: "주간배송 19:00 도착 전 · 냉장고에 있던 반찬 + 밥으로" },
+          { slot: "저녁", text: "차돌박이 알배추찜 (300g·깻잎·홀그레인머스타드) + 순두부 계란국 + 메추리알 장조림" },
+          { slot: "간식", text: "집에 있던 과일·우유", detail: "방과후 간식 · 새로 산 간식은 화요일부터" }
         ]
       },
       {
         date: "2026-11-17", day: "화",
         meals: [
           { slot: "아침", text: "유부초밥 패밀리세트 + 토장 된장국 + 방울토마토" },
-          { slot: "저녁", text: "무항생제 닭볶음탕 (1.2kg·감자·대파·당면사리) + 알배추 겉절이" }
+          { slot: "점심", text: "참타리버섯 계란볶음밥 + 깻잎", detail: "아이 둘은 급식 · 참타리버섯 1팩 사용" },
+          { slot: "저녁", text: "무항생제 닭볶음탕 (1.2kg·감자·대파·당면사리) + 알배추 겉절이" },
+          { slot: "간식", text: "요플레 + 참쌀선과", detail: "아이들 방과후 · 요플레 10입 중 1" }
         ]
       },
       {
         date: "2026-11-18", day: "수",
         meals: [
           { slot: "아침", text: "계란 스크램블 + 버터감자구이 + 홍시" },
-          { slot: "저녁", text: "한우 소불고기 전골 (300g·버섯·알배추·당면 듬뿍) + 메추리알 장조림" }
+          { slot: "점심", text: "닭볶음탕 남은 살 닭죽 (또는 살발라 볶음밥)", detail: "화요일 닭볶음탕 남은 국물·살 활용" },
+          { slot: "저녁", text: "한우 소불고기 전골 (300g·버섯·알배추·당면 듬뿍) + 메추리알 장조림" },
+          { slot: "간식", text: "홍시 + 왕고래밥" }
         ]
       },
       {
         date: "2026-11-19", day: "목",
         meals: [
           { slot: "아침", text: "시리얼 + 삶은 계란 + 바나나" },
-          { slot: "저녁", text: "차돌박이 된장찌개 (남은 300g·다담·순두부1·무·감자) + 콘마요 + 계란말이" }
+          { slot: "점심", text: "알배추 당면 잡채 (대파·계란지단) + 밥", detail: "당면 300g 중 남은 양으로 · 성인 2인 한 끼" },
+          { slot: "저녁", text: "차돌박이 된장찌개 (남은 300g·다담·순두부1·무·감자) + 콘마요 + 계란말이" },
+          { slot: "간식", text: "바나나 + 사브레 황치즈크렘" }
         ]
       },
       {
         date: "2026-11-20", day: "금",
         meals: [
           { slot: "아침", text: "간장계란밥 + 된장국 + 방울토마토" },
-          { slot: "저녁", text: "감자 짜장밥 (짜장분말+감자+계란후라이) + 홍시" }
+          { slot: "점심", text: "무생채 비빔밥 (계란후라이 얹기)", detail: "한 주 마무리 가볍게 · 주말 장보기 전 냉장고 정리" },
+          { slot: "저녁", text: "감자 짜장밥 (짜장분말+감자+계란후라이) + 홍시" },
+          { slot: "간식", text: "요플레 + 닭다리 후라이드치킨맛", detail: "금요일 간식 · 아이들 좋아하는 과자" }
         ]
       },
       {
@@ -853,7 +866,8 @@ window.MEAL_DASHBOARD = (function () {
         meals: [
           { slot: "아침", text: "감자계란국 + 메추리알 장조림 + 요플레" },
           { slot: "점심", text: "굴진짬뽕 (어른) & 스위트콘 계란볶음밥 (아이)" },
-          { slot: "저녁", text: "순두부찌개 (남은 순두부1·계란·마늘·대파) + 알배추쌈 (토장)" }
+          { slot: "저녁", text: "순두부찌개 (남은 순두부1·계란·마늘·대파) + 알배추쌈 (토장)" },
+          { slot: "간식", text: "크리치오 시리얼 + 바나나", detail: "우유는 장볼 목록에 있어요" }
         ]
       },
       {
@@ -861,7 +875,8 @@ window.MEAL_DASHBOARD = (function () {
         meals: [
           { slot: "아침", text: "시리얼 + 삶은 계란 + 바나나·방울토마토" },
           { slot: "점심", text: "열라면 (어른) & 계란볶음밥 (아이)" },
-          { slot: "저녁", text: "소고기·무국 (또는 뭇국) + 계란찜 + 남은 반찬 정리" }
+          { slot: "저녁", text: "소고기·무국 (또는 뭇국) + 계란찜 + 남은 반찬 정리" },
+          { slot: "간식", text: "방울토마토 + 요플레 (남은 과자 정리)" }
         ]
       }
     ],
@@ -884,8 +899,8 @@ window.MEAL_DASHBOARD = (function () {
 
   const STORAGE_KEY = "aram-meal-dashboard-v2";
   const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
-  const SLOT_CLASS = { "아침": "morning", "점심": "lunch", "저녁": "dinner" };
-  const SLOT_ORDER = { "아침": 0, "점심": 1, "저녁": 2 };
+  const SLOT_CLASS = { "아침": "morning", "점심": "lunch", "저녁": "dinner", "간식": "snack" };
+  const SLOT_ORDER = { "아침": 0, "점심": 1, "저녁": 2, "간식": 3 };
   const TABS = ["meals", "inv", "shop", "ledger", "receipt"];
 
   let state = null;

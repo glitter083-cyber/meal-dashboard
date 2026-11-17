@@ -208,6 +208,7 @@
   .slot.morning{background:var(--amber-soft);color:var(--amber)}
   .slot.lunch{background:var(--green-soft);color:var(--green)}
   .slot.dinner{background:var(--accent-soft);color:#A6542F}
+  .slot.snack{background:var(--violet-soft);color:var(--violet)}
   .meal-text{font-size:14px;line-height:1.5;color:var(--ink);word-break:keep-all}
   .meal-text.is-empty{color:var(--ink3);font-weight:600}
   .meal-row.done .meal-text{color:var(--ink3);text-decoration:line-through;text-decoration-thickness:1px}
@@ -580,7 +581,8 @@
     <div class="notice-card" id="templateNotice">
       <p class="nt-title">공유용 템플릿이에요</p>
       <p class="nt-body">
-        끼니 옆 <b>✏️</b>를 눌러 이번 주 식단을 적고, 먹은 끼니는 줄을 눌러 체크하세요.
+        이번 주 월~일 식단이 <b>아침 · 점심 · 저녁 · 간식</b> 네 칸씩 (모두 28칸) 비어 있어요.
+        끼니 옆 <b>✏️</b>를 눌러 메뉴를 적고, 먹은 끼니는 줄을 눌러 체크하세요.
         재료·장볼 것도 자유롭게 바꿀 수 있어요. 입력한 내용은 <b>이 폰 브라우저에만 자동 저장</b>되고
         어디로도 보내지 않아요. 홈 화면에 추가하면 앱처럼 열려요.
       </p>
@@ -793,7 +795,8 @@ window.MEAL_DASHBOARD = (function () {
     inventory: [],
 
     /* ── 이번 주 식단 — 이번 주 월~일 날짜로 자동 생성 (templateWeekPlan) ──
-       meals[].slot 은 "아침" / "점심" / "저녁". text 가 비어 있으면 화면에
+       월~일 7일 × 네 칸(아침 / 점심 / 저녁 / 간식) = 28칸.
+       meals[].slot 은 "아침" / "점심" / "저녁" / "간식". text 가 비어 있으면 화면에
        "메뉴를 적어 보세요"로 보이고, ✏️ 로 바로 적을 수 있어요. */
     mealPlan: templateWeekPlan(),
 
@@ -816,7 +819,7 @@ window.MEAL_DASHBOARD = (function () {
       plan.push({
         date: isoOf(d),
         day: days[d.getDay()],
-        meals: ["아침", "점심", "저녁"].map(function (slot) {
+        meals: ["아침", "점심", "저녁", "간식"].map(function (slot) {
           return { slot: slot, text: "" };
         })
       });
@@ -826,8 +829,8 @@ window.MEAL_DASHBOARD = (function () {
 
   const STORAGE_KEY = "meal-dashboard-template-v1";
   const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
-  const SLOT_CLASS = { "아침": "morning", "점심": "lunch", "저녁": "dinner" };
-  const SLOT_ORDER = { "아침": 0, "점심": 1, "저녁": 2 };
+  const SLOT_CLASS = { "아침": "morning", "점심": "lunch", "저녁": "dinner", "간식": "snack" };
+  const SLOT_ORDER = { "아침": 0, "점심": 1, "저녁": 2, "간식": 3 };
   const TABS = ["meals", "inv", "shop", "ledger", "receipt"];
 
   let state = null;
