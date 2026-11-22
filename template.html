@@ -590,6 +590,29 @@
     background:transparent;color:var(--ink3);font-size:13.5px;font-weight:700;
   }
   .plan-note{font-size:11px;line-height:1.55;color:var(--ink3);margin-top:8px;text-align:center;word-break:keep-all}
+
+  /* ── 📅 새 주간 업데이트 버튼 · 시트 ── */
+  .week-btn{
+    width:100%;margin-top:12px;padding:13px 14px;border-radius:14px;
+    border:1px solid #E4CDB6;background:linear-gradient(180deg,#FFFDFA,#FDF6E9);
+    color:var(--accent);font-size:14px;font-weight:800;letter-spacing:-.01em;
+  }
+  .week-btn:active{background:#F8F1E8}
+  .week-hint{font-size:11.5px;color:var(--ink3);margin:6px 0 2px;text-align:center;font-weight:600;word-break:keep-all}
+  .week-field{display:block;margin-top:14px}
+  .week-field span{display:block;font-size:11.5px;font-weight:700;color:var(--ink3);margin-bottom:6px}
+  .week-field input{
+    width:100%;padding:12px;border-radius:12px;border:1px solid var(--line2);
+    background:#fff;font-size:15px;font-weight:700;color:var(--ink);font-family:inherit;
+  }
+  .week-start{font-size:12px;font-weight:700;color:var(--accent);margin:7px 0 0;text-align:center}
+  .plan-opt{
+    width:100%;padding:13px 14px;border-radius:14px;
+    border:1px solid var(--line2);background:#fff;color:var(--ink2);text-align:left;
+  }
+  .plan-opt:active{background:#F8F1E8}
+  .plan-opt b{display:block;font-size:14px;font-weight:800;color:var(--ink)}
+  .plan-opt small{display:block;margin-top:3px;font-size:11.5px;font-weight:600;line-height:1.45;color:var(--ink3);word-break:keep-all}
   /* ── 공유용 템플릿 안내 ───────────────── */
   .notice-card{
     background:linear-gradient(180deg,#FFFDFA,#FDF6E9);
@@ -642,6 +665,8 @@
       <button class="nt-btn" type="button" data-act="sample-clear">예시 데이터 지우고 빈 식단표로 시작</button>
     </div>
     <div class="progress-card" id="mealProgress"></div>
+    <button class="week-btn" type="button" id="weekBtn" data-act="week-open">📅 새 주간 업데이트</button>
+    <p class="week-hint">다음 주로 넘기면서 식단을 새로 준비해요 · 날짜와 선택은 이 기기에 저장돼요</p>
     <div id="dayList" class="day-list"></div>
   </section>
 
@@ -658,6 +683,8 @@
         <button type="submit">추가</button>
       </div>
     </form>
+    <button class="wide-ghost" type="button" id="invPurge" data-act="inv-purge" disabled>🧹 소진 항목 지우기</button>
+    <p class="plan-hint" id="invPurgeHint">소진 표시한 재료를 냉장고 목록에서 지워요 · 가계부 소진비용은 그대로 남아요</p>
     <button class="plan-btn" type="button" id="planBtn" data-act="plan-open">🍳 이 재고로 주간 식단 짜기</button>
     <p class="plan-hint">냉장고에 있는 재료로 이번 주 28칸을 짜요 · 체크한 칸은 그대로 둘 수 있어요</p>
   </section>
@@ -780,6 +807,12 @@
   <div class="plan-card" id="planSheet" role="dialog" aria-modal="true" aria-labelledby="planTitle"></div>
 </div>
 
+<!-- 📅 새 주간 업데이트 시트 -->
+<div class="plan-overlay" id="weekOverlay" aria-hidden="true">
+  <div class="plan-backdrop" data-act="week-close"></div>
+  <div class="plan-card" id="weekSheet" role="dialog" aria-modal="true" aria-labelledby="weekTitle"></div>
+</div>
+
 <nav class="tabbar" role="tablist" aria-label="주요 화면">
   <button type="button" role="tab" id="tab-meals" data-act="tab" data-tab="meals" aria-selected="true">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v6a2.2 2.2 0 0 0 2.2 2.2H9.5V3M8.3 11.2V21"/><path d="M16.6 3c-1.5 1.6-2.1 3.2-2.1 5.1 0 1.6.7 2.6 2.1 2.6V3ZM16.6 10.7V21"/></svg>
@@ -895,7 +928,7 @@ window.MEAL_DASHBOARD = (function () {
   const TABS = ["meals", "inv", "shop", "ledger", "receipt"];
 
   let state = null;
-  const ui = { tab: "meals", invCat: "all", invQuery: "", favOnly: false, editing: null, planOpen: false };
+  const ui = { tab: "meals", invCat: "all", invQuery: "", favOnly: false, editing: null, planOpen: false, weekOpen: false };
 
   /* ── 작은 도우미 ─────────────────────────────────────────────────── */
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
@@ -903,6 +936,42 @@ window.MEAL_DASHBOARD = (function () {
   function shortDate(iso) {
     const p = String(iso).split("-");
     return Number(p[1]) + "/" + Number(p[2]);
+  }
+  /* 날짜 도우미 — 주간 이동에 써요 */
+  function parseISO(iso) {
+    const p = String(iso == null ? "" : iso).split("-");
+    if (p.length !== 3) return null;
+    const y = Number(p[0]), m = Number(p[1]), d = Number(p[2]);
+    if (!y || !m || !d) return null;
+    const dt = new Date(y, m - 1, d);
+    return isNaN(dt.getTime()) ? null : dt;
+  }
+  function isISODate(s) {
+    const dt = parseISO(s);
+    return !!dt && isoOf(dt) === String(s);
+  }
+  function addDaysISO(iso, n) {
+    const dt = parseISO(iso);
+    if (!dt) return iso;
+    dt.setDate(dt.getDate() + n);
+    return isoOf(dt);
+  }
+  function weekdayOf(iso) {
+    const dt = parseISO(iso);
+    return dt ? WEEKDAYS[dt.getDay()] : "";
+  }
+  /* 주간은 월요일 시작이에요 */
+  function mondayOf(iso) {
+    const dt = parseISO(iso);
+    if (!dt) return firstPlanDate();
+    dt.setDate(dt.getDate() - ((dt.getDay() + 6) % 7));
+    return isoOf(dt);
+  }
+  function firstPlanDate() {
+    return INITIAL_DATA.mealPlan.length ? INITIAL_DATA.mealPlan[0].date : todayISO();
+  }
+  function weekStartISO() {
+    return (state && isISODate(state.weekStart)) ? state.weekStart : firstPlanDate();
   }
   function num(n) {
     const v = String(Math.round(Number(n) || 0));
@@ -933,7 +1002,9 @@ window.MEAL_DASHBOARD = (function () {
       version: INITIAL_DATA.version, tab: "meals",
       meals: {}, mealEdits: {}, out: {}, custom: [], shop: shop,
       favs: INITIAL_DATA.favs.slice(),
-      offline: [], importedOrders: [], baseline: null
+      offline: [], importedOrders: [], baseline: null,
+      /* 주간 이동 · 빈 식단 · 지운(소진) 항목 */
+      weekStart: firstPlanDate(), blankMenus: false, purged: [], purgedValue: 0
     };
   }
   function loadState() {
@@ -954,7 +1025,11 @@ window.MEAL_DASHBOARD = (function () {
         favs: Array.isArray(saved.favs) ? saved.favs : def.favs,
         offline: Array.isArray(saved.offline) ? saved.offline : [],
         importedOrders: Array.isArray(saved.importedOrders) ? saved.importedOrders : [],
-        baseline: saved.baseline || null
+        baseline: saved.baseline || null,
+        weekStart: isISODate(saved.weekStart) ? saved.weekStart : def.weekStart,
+        blankMenus: !!saved.blankMenus,
+        purged: Array.isArray(saved.purged) ? saved.purged : [],
+        purgedValue: Number(saved.purgedValue) || 0
       };
     } catch (e) {
       return defaultState();
@@ -978,7 +1053,10 @@ window.MEAL_DASHBOARD = (function () {
     state.custom.forEach(function (it) {
       list.push({ id: it.id, cat: it.cat || "pantry", name: it.name, detail: it.detail || "", price: (it.price == null ? null : it.price), custom: true });
     });
-    return list;
+    /* 소진 후 지운 항목은 목록에서 빠져요 */
+    const purged = state.purged || [];
+    if (!purged.length) return list;
+    return list.filter(function (it) { return purged.indexOf(it.id) < 0; });
   }
   function allOrders() {
     /* 구매내역: 기본 온라인 주문 + 가져온 온라인 주문 + 오프라인 장보기 */
@@ -1019,9 +1097,10 @@ window.MEAL_DASHBOARD = (function () {
   /* 끼니 화면에 보일 내용(기본 식단 + 직접 고진 내용) */
   function mealView(date, m) {
     const e = state.mealEdits[mealKey(date, m.slot)];
+    const blank = !!state.blankMenus;
     return {
-      text: (e && typeof e.text === "string") ? e.text : (m.text || ""),
-      detail: (e && typeof e.detail === "string") ? e.detail : (m.detail || "")
+      text: (e && typeof e.text === "string") ? e.text : (blank ? "" : (m.text || "")),
+      detail: (e && typeof e.detail === "string") ? e.detail : (blank ? "" : (m.detail || ""))
     };
   }
   /* INITIAL_DATA 원본 끼니 찾기 (되돌리기·변경 없음 판단용) */
@@ -1066,8 +1145,18 @@ window.MEAL_DASHBOARD = (function () {
   function weekRange() {
     const plan = INITIAL_DATA.mealPlan;
     if (!plan.length) return { from: "", to: "", label: "" };
-    const from = plan[0].date, to = plan[plan.length - 1].date;
+    const from = weekStartISO(), to = addDaysISO(from, 6);
     return { from: from, to: to, label: shortDate(from) + " – " + shortDate(to) };
+  }
+  /* 화면에 보이는 7일 — 날짜는 state.weekStart 기준으로 옮겨 보여 줘요.
+     칸(key)은 INITIAL_DATA.mealPlan의 날짜를 그대로 쓰기 때문에 주가 바뀌어도
+     저장된 체크·✏️ 수정 기록이 사라지지 않아요. */
+  function weekDays() {
+    const start = weekStartISO();
+    return INITIAL_DATA.mealPlan.map(function (d, i) {
+      const date = addDaysISO(start, i);
+      return { base: d.date, date: date, day: weekdayOf(date), meals: d.meals };
+    });
   }
 
   /* ── 비용 계산 ───────────────────────────────────────────────────── */
@@ -1079,7 +1168,8 @@ window.MEAL_DASHBOARD = (function () {
       else onlineTotal += Number(o.paid) || 0;
     });
     const items = inventoryAll();
-    let spent = 0, remaining = 0;
+    /* 지운(소진) 항목의 금액은 누적 소진비용으로 계속 더해요 — 목록에서 빠져도 가계부가 망가지지 않아요 */
+    let spent = Number(state.purgedValue) || 0, remaining = 0;
     items.forEach(function (it) {
       const v = Number(it.price) || 0;
       if (invOwned(it.id)) remaining += v; else spent += v;
@@ -1143,7 +1233,7 @@ window.MEAL_DASHBOARD = (function () {
 
     let note = "";
     if (today > range.to) {
-      note = '<p class="pc-note">이번 주 식단 기간이 지났어요. 새 장보기 내역으로 바꾸면 다음 주 식단이 보여요.</p>';
+      note = '<p class="pc-note">이 주간이 지났어요. 위의 📅 새 주간 업데이트를 눌러 다음 주로 넘길 수 있어요.</p>';
     } else if (today < range.from) {
       note = '<p class="pc-note">' + esc(shortDate(range.from)) + "부터 시작하는 주간 식단이에요.</p>";
     }
@@ -1151,7 +1241,7 @@ window.MEAL_DASHBOARD = (function () {
     document.getElementById("mealProgress").innerHTML =
       '<div class="pc-top">' +
         '<div class="pc-left">' +
-          '<p class="pc-label">이번 주 식단 · ' + esc(range.label) + "</p>" +
+          '<p class="pc-label">' + (today >= range.from && today <= range.to ? "이번 주 식단" : "주간 식단") + " · " + esc(range.label) + "</p>" +
           '<p class="pc-value">' + num(stats.total) + "끼 중 <b>" + num(stats.done) + "끼</b> 완료</p>" +
         "</div>" +
         '<div class="pc-right"><span class="pc-today">' + (today >= range.from && today <= range.to ? "오늘 " : "") + esc(todayLabel()) + "</span></div>" +
@@ -1159,17 +1249,17 @@ window.MEAL_DASHBOARD = (function () {
       '<div class="bar"><i style="width:' + pct + '%"></i></div>' +
       note;
 
-    const rows = INITIAL_DATA.mealPlan.map(function (d) {
+    const rows = weekDays().map(function (d) {
       const meals = d.meals.slice().sort(function (a, b) {
         return (SLOT_ORDER[a.slot] || 0) - (SLOT_ORDER[b.slot] || 0);
       });
       let doneN = 0;
       const mealHTML = meals.map(function (m) {
-        const key = mealKey(d.date, m.slot);
+        const key = mealKey(d.base, m.slot);
         const done = !!state.meals[key];
         if (done) doneN++;
         const cls = SLOT_CLASS[m.slot] || "dinner";
-        const view = mealView(d.date, m);
+        const view = mealView(d.base, m);
         const edited = !!state.mealEdits[key];
         if (ui.editing === key) {
           return '<div class="meal-edit" data-key="' + esc(key) + '">' +
@@ -1249,6 +1339,12 @@ window.MEAL_DASHBOARD = (function () {
     all.forEach(function (it) { if (invOwned(it.id)) owned++; });
     const c = costSummary();
 
+    const purgeBtn = document.getElementById("invPurge");
+    if (purgeBtn) {
+      purgeBtn.textContent = "🧹 소진 항목 지우기" + ((all.length - owned) ? " (" + (all.length - owned) + "개)" : "");
+      purgeBtn.disabled = !(all.length - owned);
+    }
+
     document.getElementById("invCount").textContent =
       "전체 " + all.length + "개 · 보유 " + owned + " · 소진 " + (all.length - owned) +
       " · 남은 재고 " + num(c.remaining) + "원" +
@@ -1280,6 +1376,32 @@ window.MEAL_DASHBOARD = (function () {
     }).join("");
   }
   function renderInventory() { renderInvChips(); renderInvList(); }
+
+  /* ── 소진 항목 지우기 ─────────────────────────────────────────────
+     소진 표시한 재료를 목록에서 지워요. 금액은 누적 소진비용(purgedValue)으로 남겨
+     가계부의 소진비용·끼니당 식대가 줄어들지 않게 해요. */
+  function depletedItems() {
+    return inventoryAll().filter(function (it) { return !invOwned(it.id); });
+  }
+  function purgeDepleted(skipConfirm) {
+    const list = depletedItems();
+    if (!list.length) { toast("소진 표시한 재료가 없어요"); return 0; }
+    if (!skipConfirm) {
+      const msg = "소진 표시한 재료 " + list.length + "개를 냉장고 목록에서 지울까요?\n지운 항목은 되돌릴 수 없고, 가계부 소진비용에는 그대로 남아요.";
+      if (window.confirm && !window.confirm(msg)) return 0;
+    }
+    const ids = list.map(function (it) { return it.id; });
+    const value = list.reduce(function (s, it) { return s + (Number(it.price) || 0); }, 0);
+    state.purged = (state.purged || []).concat(ids);
+    state.purgedValue = (Number(state.purgedValue) || 0) + value;
+    state.custom = state.custom.filter(function (it) { return ids.indexOf(it.id) < 0; });
+    state.favs = state.favs.filter(function (id) { return ids.indexOf(id) < 0; });
+    ids.forEach(function (id) { delete state.out[id]; });
+    saveState();
+    renderAll();
+    toast("소진 표시한 재료 " + ids.length + "개를 냉장고에서 지웠어요");
+    return ids.length;
+  }
 
   /* ── 자주구매 섹션 + 장볼 목록 ───────────────────────────────────── */
   function renderFavorites() {
@@ -1902,6 +2024,10 @@ window.MEAL_DASHBOARD = (function () {
         if (Array.isArray(payload.custom)) state.custom = payload.custom;
         if (Array.isArray(payload.offline)) state.offline = payload.offline;
         if (Array.isArray(payload.favs)) state.favs = payload.favs;
+        if (isISODate(payload.weekStart)) state.weekStart = payload.weekStart;
+        if (typeof payload.blankMenus === "boolean") state.blankMenus = payload.blankMenus;
+        if (Array.isArray(payload.purged)) state.purged = payload.purged;
+        if (payload.purgedValue != null) state.purgedValue = Number(payload.purgedValue) || 0;
       }
       setStatus("importStatus", "덮어썼어요 · 주문 " + (order ? "1건" : "유지") + ", 품목 " + num(items.length) + "건 반영", true);
     } else {
@@ -1942,7 +2068,9 @@ window.MEAL_DASHBOARD = (function () {
         shopping: state.shop,
         meals: state.meals, out: state.out, custom: state.custom,
         offline: state.offline, favs: state.favs,
-        importedOrders: state.importedOrders
+        importedOrders: state.importedOrders,
+        weekStart: weekStartISO(), blankMenus: !!state.blankMenus,
+        purged: state.purged || [], purgedValue: Number(state.purgedValue) || 0
       }
     };
   }
@@ -2038,9 +2166,22 @@ window.MEAL_DASHBOARD = (function () {
   }
 
   function resetAll() {
-    const msg = "체크한 식단·직접 고친 식단·재고·장볼 목록·오프라인 장보기·가져온 주문과 직접 추가한 항목이 모두 사라지고 처음 상태로 돌아가요. 계속할까요?";
+    /* 초기화하면 소진 표시한 재료는 목록에서 지워요 (다시 '보유'로 살아나지 않아요) */
+    const dep = depletedItems();
+    const depIds = dep.map(function (it) { return it.id; });
+    const depValue = dep.reduce(function (s, it) { return s + (Number(it.price) || 0); }, 0);
+    const msg = "체크한 식단·직접 고친 식단·장볼 목록·오프라인 장보기·가져온 주문과 직접 추가한 항목이 모두 사라지고 처음 상태로 돌아가요." +
+      (dep.length ? "\n소진 표시한 재료 " + dep.length + "개는 냉장고 목록에서 지워져요." : "") +
+      "\n계속할까요?";
     if (window.confirm && !window.confirm(msg)) return;
+    const keepPurged = (state.purged || []).slice();
+    const keepValue = Number(state.purgedValue) || 0;
+    const keepWeek = weekStartISO();
     state = defaultState();
+    state.purged = keepPurged.concat(depIds);
+    state.purgedValue = keepValue + depValue;
+    state.favs = state.favs.filter(function (id) { return depIds.indexOf(id) < 0; });
+    state.weekStart = keepWeek;
     saveState();
     ui.tab = "meals";
     ui.editing = null;
@@ -2448,6 +2589,95 @@ window.MEAL_DASHBOARD = (function () {
     return res;
   }
 
+  /* ══════════════════════════════════════════════════════════════════
+     📅 새 주간 업데이트 — 매주 직접 다음 주로 넘기고 식단을 준비해요
+     · 화면 날짜는 state.weekStart부터 7일, 칸(key)은 INITIAL_DATA 날짜 그대로
+     · 세 가지: 재고로 새로 짜기 / 빈 식단으로 시작 / 날짜만 옮기기
+     ══════════════════════════════════════════════════════════════════ */
+  function weekSheetHTML() {
+    const cur = weekStartISO();
+    const next = mondayOf(addDaysISO(cur, 7));
+    const invN = planActiveItems().length;
+    const label = shortDate(next) + "(" + weekdayOf(next) + ")";
+    return '<div class="plan-grip"></div>' +
+      '<p class="plan-title" id="weekTitle">📅 새 주간 업데이트</p>' +
+      '<p class="plan-sub">지금은 <b>' + esc(shortDate(cur) + " – " + shortDate(addDaysISO(cur, 6))) + '</b> 주간이에요.<br>시작일을 고르고 넘기는 방법을 선택하세요.</p>' +
+      '<label class="week-field"><span>새 주간 시작일 (월요일 기준)</span>' +
+        '<input class="fld" type="date" id="weekStartInput" value="' + esc(next) + '" aria-label="새 주간 시작일"></label>' +
+      '<p class="week-start" id="weekStartHint">' + esc(label) + "부터 새 주간이 시작돼요</p>" +
+      '<div class="plan-actions">' +
+        '<button class="plan-opt" type="button" data-act="week-plan"><b>🍳 현재 재고로 식단 짜기</b><small>냉장고 재고 ' + invN + '개로 28칸을 새로 짜고 완료 체크를 비워요</small></button>' +
+        '<button class="plan-opt" type="button" data-act="week-blank"><b>🗒 빈 식단으로 시작하기</b><small>메뉴와 완료 체크를 모두 비우고 ✏️로 직접 적어요</small></button>' +
+        '<button class="plan-opt" type="button" data-act="week-shift"><b>📅 날짜만 다음 주로 옮기기</b><small>지금 메뉴는 그대로 두고 새 주간 완료 체크만 새로 시작해요</small></button>' +
+        '<button class="plan-cancel" type="button" data-act="week-close">취소</button>' +
+      "</div>" +
+      '<p class="plan-note">넘기면 완료 체크는 새로 시작해요. ✏️로 고친 메뉴는 [날짜만 옮기기]에서 그대로 유지돼요.<br>고른 시작일은 이 기기에 저장돼 새로고침해도 그대로 보여요.</p>';
+  }
+  function syncWeekHint() {
+    const el = document.getElementById("weekStartInput");
+    if (!el) return "";
+    let picked = el.value;
+    if (!isISODate(picked)) return "";
+    const mon = mondayOf(picked);
+    if (mon !== picked) el.value = mon;  /* 입력한 날짜가 월요일이 아니면 그 주 월요일로 맞춤 */
+    const hint = document.getElementById("weekStartHint");
+    if (hint) hint.textContent = shortDate(mon) + "(" + weekdayOf(mon) + ")부터 새 주간이 시작돼요";
+    return mon;
+  }
+  function openWeekSheet() {
+    const sheet = document.getElementById("weekSheet");
+    if (sheet) sheet.innerHTML = weekSheetHTML();
+    const ov = document.getElementById("weekOverlay");
+    if (ov) { ov.classList.add("on"); ov.setAttribute("aria-hidden", "false"); }
+    ui.weekOpen = true;
+    if (document.body && document.body.style) document.body.style.overflow = "hidden";
+    const inp = document.getElementById("weekStartInput");
+    if (inp) {
+      if (inp.value) inp.value = mondayOf(inp.value);
+      if (inp.addEventListener) {
+        inp.addEventListener("change", syncWeekHint);
+        inp.addEventListener("input", syncWeekHint);
+      }
+    }
+  }
+  function closeWeekSheet() {
+    const ov = document.getElementById("weekOverlay");
+    if (ov) { ov.classList.remove("on"); ov.setAttribute("aria-hidden", "true"); }
+    ui.weekOpen = false;
+    if (document.body && document.body.style) document.body.style.overflow = "";
+  }
+  function startNewWeek(mode, startISO) {
+    const next = mondayOf(isISODate(startISO) ? startISO : addDaysISO(weekStartISO(), 7));
+    const label = shortDate(next) + "(" + weekdayOf(next) + ")";
+    let res = { filled: 0, count: 0 };
+    state.weekStart = next;
+    state.meals = {};                        /* 새 주간은 완료 체크부터 새로 */
+    if (mode === "blank") {
+      state.mealEdits = {};
+      state.blankMenus = true;
+    } else if (mode === "shift") {
+      /* 메뉴는 그대로 두고 날짜·완료 체크만 새로 시작해요 */
+    } else {
+      state.blankMenus = false;
+      res = planApply("all");                /* 재고로 28칸을 새로 짜요 */
+    }
+    saveState();
+    ui.editing = null;
+    closeWeekSheet();
+    switchTab("meals");
+    renderAll();
+    if (mode === "plan") {
+      toast(res.count
+        ? ("냉장고 재고 " + res.count + "개로 " + label + "부터 새 주간 식단을 짰어요!")
+        : (label + "부터 일반 가정식으로 새 주간 식단을 짰어요!"));
+    } else if (mode === "blank") {
+      toast(label + "부터 빈 식단으로 시작해요 · ✏️로 메뉴를 적어 보세요");
+    } else {
+      toast(label + "부터 새 주간으로 옮겼어요 · 완료 체크는 새로 시작해요");
+    }
+    return { weekStart: next, filled: res.filled, count: res.count };
+  }
+
   /* ── 이벤트 ──────────────────────────────────────────────────────── */
   function onClick(e) {
     const t = e.target;
@@ -2495,6 +2725,13 @@ window.MEAL_DASHBOARD = (function () {
     else if (act === "plan-close") { closePlanSheet(); }
     else if (act === "plan-empty") { applyPlanToMeals("empty"); }
     else if (act === "plan-all") { applyPlanToMeals("all"); }
+    else if (act === "week-open") { openWeekSheet(); }
+    else if (act === "week-close") { closeWeekSheet(); }
+    else if (act === "week-plan" || act === "week-blank" || act === "week-shift") {
+      const inp = document.getElementById("weekStartInput");
+      startNewWeek(act.replace("week-", ""), inp ? inp.value : "");
+    }
+    else if (act === "inv-purge") { purgeDepleted(); }
     else if (act === "reset") { resetAll(); }
   }
 
@@ -2505,7 +2742,9 @@ window.MEAL_DASHBOARD = (function () {
 
     document.addEventListener("click", onClick);
     document.addEventListener("keydown", function (e) {
-      if (e && e.key === "Escape" && ui.planOpen) closePlanSheet();
+      if (!e || e.key !== "Escape") return;
+      if (ui.planOpen) closePlanSheet();
+      if (ui.weekOpen) closeWeekSheet();
     });
 
     const search = document.getElementById("invSearch");
@@ -2621,12 +2860,20 @@ window.MEAL_DASHBOARD = (function () {
     planFillable: function (mode) { return planKeysToFill(mode || "empty").length; },
     activeInventory: planActiveItems,
     recipes: RECIPE_BOOK,
+    openWeek: openWeekSheet,
+    closeWeek: closeWeekSheet,
+    startNewWeek: startNewWeek,
+    weekDays: weekDays,
+    purgeDepleted: purgeDepleted,
+    depletedItems: depletedItems,
     helpers: {
       activeInventory: planActiveItems,
       inventoryAll: inventoryAll, mealStats: mealStats, todayISO: todayISO,
       weekRange: weekRange, costSummary: costSummary, allOrders: allOrders, favItems: favItems,
       effectiveMealPlan: effectiveMealPlan, mealView: mealView, originalMeal: originalMeal,
-      editingKey: function () { return ui.editing; }
+      editingKey: function () { return ui.editing; },
+      weekStart: weekStartISO, weekDays: weekDays, addDaysISO: addDaysISO,
+      mondayOf: mondayOf, weekdayOf: weekdayOf, depletedItems: depletedItems
     }
   };
   window.__mealDashboard = api;
