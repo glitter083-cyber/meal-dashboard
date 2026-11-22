@@ -400,7 +400,7 @@
   .fineprint{font-size:11px;color:var(--ink3);line-height:1.65;margin:14px 4px 0;word-break:keep-all}
   .fineprint b{color:var(--ink2)}
 
-  /* ── 데이터 관리 ──────────────────────── */
+  /* ── 기록 저장·불러오기 ──────────────────── */
   .data-card{padding:16px 16px 15px;margin-top:12px}
   .data-title{font-size:13.5px;font-weight:800}
   .data-sub{font-size:11.5px;color:var(--ink3);margin:3px 0 11px;line-height:1.6;word-break:keep-all}
@@ -468,6 +468,41 @@
     background:transparent;color:var(--ink3);font-size:15px;line-height:1;padding:0;
   }
   .paste-card .btn-solid[disabled]{opacity:.45}
+
+  /* ── 🛒 장본 내역 가져오기 버튼 · 시트 ── */
+  .order-import-btn{
+    width:100%;margin:0 0 12px;padding:13px 15px;border-radius:15px;
+    border:1px solid #E4CDB6;background:linear-gradient(180deg,#FFFDFA,#FDF6E9);
+    color:var(--accent);font-size:14.5px;font-weight:800;letter-spacing:-.01em;
+    display:flex;flex-direction:column;align-items:center;gap:3px;font-family:inherit;
+  }
+  .order-import-btn:active{background:#F8F1E8}
+  .order-import-btn small{font-size:11px;font-weight:600;color:var(--ink3);line-height:1.45;word-break:keep-all}
+  .paste-step{font-size:11.5px;font-weight:800;color:var(--ink3);margin:14px 0 7px;letter-spacing:.02em}
+  .store-chips{display:flex;gap:6px}
+  .store-chip{
+    flex:1 1 0;min-width:0;padding:11px 4px;border-radius:12px;border:1px solid var(--line2);
+    background:#fff;color:var(--ink2);font-size:12.5px;font-weight:700;font-family:inherit;
+  }
+  .store-chip.on{background:var(--accent-soft);border-color:#E4CDB6;color:#A6542F}
+  .paste-daterow{display:flex;gap:7px;align-items:center}
+  .paste-daterow input{
+    flex:1 1 0;min-width:0;padding:11px 12px;border-radius:12px;border:1px solid var(--line2);
+    background:#fff;font-family:inherit;font-size:14px;font-weight:700;color:var(--ink);
+    -webkit-appearance:none;appearance:none;
+  }
+  .paste-ex-btn{
+    width:100%;margin-top:8px;padding:9px;border-radius:11px;
+    border:1px dashed var(--line2);background:#fff;color:var(--ink2);
+    font-size:11.5px;font-weight:700;font-family:inherit;
+  }
+  .paste-example{
+    margin-top:8px;padding:10px 12px;border-radius:12px;background:#FBF6EF;
+    font-size:11.5px;line-height:1.7;color:var(--ink2);white-space:pre-wrap;word-break:keep-all;
+    border:1px solid #F0E3D3;
+  }
+  .paste-card textarea.data-area{min-height:104px}
+  .paste-card .plan-actions{margin-top:14px}
   .order-row{
     display:flex;align-items:flex-start;gap:9px;
     padding:12px 2px;border-top:1px solid #F6EDE3;
@@ -645,6 +680,9 @@
 
   <!-- 냉장고 재고 -->
   <section class="panel" id="panel-inv" role="tabpanel" aria-labelledby="tab-inv">
+    <button class="order-import-btn" type="button" id="invImportBtn" data-act="paste-open">🛒 쿠팡·이마트 장본 내역 가져오기
+      <small>주문내역 화면을 그대로 복사해 붙여넣기만 하면 재고·가계부에 한 번에 넣어요</small>
+    </button>
     <input class="search" id="invSearch" type="search" placeholder="재료 이름으로 찾기" autocomplete="off" aria-label="재료 검색">
     <div class="chips" id="invChips" role="group" aria-label="카테고리 필터"></div>
     <p class="count-line" id="invCount"></p>
@@ -681,8 +719,11 @@
     <div class="item-list fav-list" id="favList"></div>
   </section>
 
-  <!-- 가계부 · 데이터 -->
+  <!-- 가계부 · 기록 -->
   <section class="panel" id="panel-ledger" role="tabpanel" aria-labelledby="tab-ledger">
+    <button class="order-import-btn" type="button" id="ledgerImportBtn" data-act="paste-open">🛒 쿠팡·이마트 장본 내역 가져오기
+      <small>쿠팡·이마트몰 주문내역을 복사해 붙여넣으면 품목·금액을 알아서 찾아 담아요</small>
+    </button>
     <div class="card metrics" id="ledgerMetrics"></div>
 
     <div class="sec-title"><h2>✍️ 오프라인 장보기 추가</h2><span>마트·시장에서 산 것</span></div>
@@ -707,57 +748,29 @@
     <div class="sec-title"><h2>🧾 구매내역</h2><span id="ordersCount"></span></div>
     <div class="card" id="ordersCard" style="padding:4px 14px 8px"></div>
 
-    <div class="card data-card paste-card" id="pasteCard">
-      <p class="data-title">📋 주문내역·영수증 텍스트 붙여넣기</p>
-      <p class="data-sub">
-        이마트몰·쿠팡 주문내역, 영수증, 카톡 장보기 메모를 <b>그대로 붙여넣으면</b> 품목명과 금액을 찾아 담아요.
-        <b>배송완료·수량·상품평</b> 같은 필요 없는 줄은 알아서 걸러요. 미리보기에서 고친 뒤 한 번에 담으면 돼요.
-      </p>
-      <div class="prow">
-        <input class="fld" id="pasteStore" type="text" placeholder="구매처 (예: 이마트몰)" autocomplete="off" aria-label="구매처">
-        <input class="fld" id="pasteDate" type="date" aria-label="구매 날짜">
-      </div>
-      <textarea class="data-area" id="pasteArea" placeholder="예)&#10;알찬란 30구 7,837원&#10;노브랜드 냉동차돌박이 600g 16,788&#10;우유 2,900원 / 양파 1망 3,500원" aria-label="주문내역 텍스트"></textarea>
-      <label class="pchk">
-        <input type="checkbox" id="pasteSkipDup" checked>
-        이미 재고에 있는 이름은 냉장고에 또 넣지 않기
-      </label>
-      <div class="btn-row">
-        <button class="btn-solid" type="button" data-act="paste-preview">미리보기</button>
-        <button class="wide-ghost" type="button" id="pasteAdd" data-act="paste-add" disabled>담을 품목을 선택하세요</button>
-      </div>
-      <div class="paste-preview" id="pastePreview"></div>
-      <p class="data-status" id="pasteStatus" role="status"></p>
-    </div>
-
     <div class="card data-card" id="dataCard">
-      <p class="data-title">📥 온라인 주문내역 가져오기 (JSON)</p>
+      <p class="data-title">📂 저장해 둔 기록 불러오기</p>
       <p class="data-sub">
-        이마트몰·쿠팡 등에서 긁어온 <b>주문 JSON</b>을 아래에 붙여넣거나 파일로 올리세요.
-        <b>합치기</b>는 기존 내역에 더하고, <b>덮어쓰기</b>는 이번 주 주문·재고를 새 내역으로 바꿔요.
+        동동이가 보내 준 기록 파일이나, 전에 <b>💾 내 기록 파일로 저장</b>으로 받아 둔 파일을 고르면
+        식단·냉장고·장볼 목록·구매내역이 그대로 되살아나요.
       </p>
-      <div class="seg" id="importMode">
-        <label class="on"><input type="radio" name="importMode" value="merge" checked>합치기</label>
-        <label><input type="radio" name="importMode" value="overwrite">덮어쓰기</label>
-      </div>
-      <textarea class="data-area" id="importArea" placeholder='여기에 JSON을 붙여넣으세요. 예: {"order":{...},"inventory":[...]}' aria-label="JSON 붙여넣기"></textarea>
       <div class="btn-row">
-        <button class="btn-solid" type="button" data-act="import-json">가져오기</button>
-        <button class="wide-ghost" type="button" data-act="import-file">파일 불러오기</button>
+        <button class="btn-solid" type="button" data-act="import-file">📂 저장한 기록 불러오기</button>
       </div>
-      <input type="file" id="importFile" accept=".json,application/json,text/plain" style="display:none" aria-hidden="true">
+      <input type="file" id="importFile" accept=".json,.txt,application/json,text/plain" style="display:none" aria-hidden="true">
       <p class="data-status" id="importStatus" role="status"></p>
     </div>
 
     <div class="card data-card" id="exportCard">
-      <p class="data-title">📤 데이터 백업·복사</p>
-      <p class="data-sub">지금까지의 재고·식단 체크·장볼 목록·구매내역 전체를 JSON으로 내보내요. 아래 상자에 담긴 내용을 그대로 복사해 두면 나중에 가져오기로 그대로 살릴 수 있어요.</p>
+      <p class="data-title">💾 내 기록 파일로 저장</p>
+      <p class="data-sub">
+        이번 주 식단·냉장고 재고·장볼 목록·구매내역을 <b>파일 하나</b>로 저장해요.
+        폰을 바꾸거나 기록이 사라져도 이 파일만 있으면 그대로 되살릴 수 있어요.
+      </p>
       <div class="btn-row">
-        <button class="btn-solid" type="button" data-act="export-json">JSON 만들기</button>
-        <button class="wide-ghost" type="button" data-act="export-copy">클립보드 복사</button>
-        <button class="wide-ghost" type="button" data-act="export-file">파일로 저장</button>
+        <button class="btn-solid" type="button" data-act="export-file">💾 내 기록 파일로 저장</button>
       </div>
-      <textarea class="data-area" id="exportArea" style="margin-top:10px" placeholder="[JSON 만들기]를 누르면 여기에 나타나요" aria-label="내보낸 JSON"></textarea>
+      <textarea id="exportArea" hidden aria-hidden="true" style="display:none"></textarea>
       <p class="data-status" id="exportStatus" role="status"></p>
     </div>
   </section>
@@ -784,6 +797,63 @@
 <div class="plan-overlay" id="weekOverlay" aria-hidden="true">
   <div class="plan-backdrop" data-act="week-close"></div>
   <div class="plan-card" id="weekSheet" role="dialog" aria-modal="true" aria-labelledby="weekTitle"></div>
+</div>
+
+<!-- 🛒 쿠팡·이마트 장본 내역 가져오기 시트 -->
+<div class="plan-overlay" id="pasteOverlay" aria-hidden="true">
+  <div class="plan-backdrop" data-act="paste-close"></div>
+  <div class="plan-card paste-card" id="pasteSheet" role="dialog" aria-modal="true" aria-labelledby="pasteTitle">
+    <div class="plan-grip"></div>
+    <p class="plan-title" id="pasteTitle">🛒 쿠팡·이마트 장본 내역 가져오기</p>
+    <p class="plan-sub">
+      쿠팡·이마트몰(SSG)의 <b>주문내역 화면</b>에서 글자를 길게 눌러 전체 복사한 뒤,
+      아래 칸에 <b>붙여넣기만</b> 하세요. 품목과 금액, 분류를 알아서 찾아 미리 보여 드려요.
+    </p>
+
+    <p class="paste-step">1 · 어디서 샀어요?</p>
+    <div class="store-chips" id="pasteStoreChips" role="group" aria-label="구매처 고르기">
+      <button class="store-chip on" type="button" data-act="paste-store" data-store="쿠팡">쿠팡</button>
+      <button class="store-chip" type="button" data-act="paste-store" data-store="이마트몰">이마트몰/SSG</button>
+      <button class="store-chip" type="button" data-act="paste-store" data-store="마트·기타">마트·기타</button>
+    </div>
+    <input type="hidden" id="pasteStore" value="쿠팡">
+
+    <p class="paste-step">2 · 언제 샀어요?</p>
+    <div class="paste-daterow">
+      <input type="date" id="pasteDate" aria-label="구매 날짜">
+    </div>
+
+    <p class="paste-step">3 · 주문내역을 붙여넣어 주세요</p>
+    <p class="plan-note" style="text-align:left;margin:0 0 8px">
+      주문 화면을 복사하기 어려우면 <b>“우유 3200, 계란 7800”</b>처럼 한 줄로 적어도 돼요.
+    </p>
+    <textarea class="data-area" id="pasteArea" placeholder="복사한 주문내역을 여기에 붙여넣으세요" aria-label="주문내역 붙여넣기"></textarea>
+    <button class="paste-ex-btn" type="button" data-act="paste-example">붙여넣기 예시 보기</button>
+    <div class="paste-example" id="pasteExample" hidden>배송완료
+11월 18일 (화) 도착
+로켓프레시
+곰곰 국내산 대파 1단
+2,980원 1개
+장바구니 담기
+배송조회
+리뷰 작성
+
+이런 줄이 섞여 있어도 괜찮아요. 품목과 금액만 골라 냅니다.</div>
+    <label class="pchk">
+      <input type="checkbox" id="pasteSkipDup" checked>
+      이미 재고에 있는 이름은 냉장고에 또 넣지 않기
+    </label>
+    <div class="btn-row">
+      <button class="wide-ghost" type="button" data-act="paste-preview">품목 다시 찾기</button>
+    </div>
+    <div class="paste-preview" id="pastePreview"></div>
+    <p class="data-status" id="pasteStatus" role="status"></p>
+    <div class="plan-actions">
+      <button class="plan-primary" type="button" id="pasteAdd" data-act="paste-add" disabled>냉장고와 가계부에 넣을 품목을 찾아 주세요</button>
+      <button class="plan-cancel" type="button" data-act="paste-close">닫기</button>
+    </div>
+    <p class="plan-note">쿠팡·이마트몰에 따로 로그인하지 않아요. 복사한 글자를 이 폰 안에서만 정리해요.</p>
+  </div>
 </div>
 
 <nav class="tabbar" role="tablist" aria-label="주요 화면">
@@ -817,8 +887,9 @@
      localStorage에 저장됩니다.
    - 새 장보기 내역으로 갈아끼우는 방법은 세 가지입니다.
      0) [가계부] 탭 → 주문내역·영수증 텍스트 붙여넣기 (품목명·금액 자동 인식)
-     1) [가계부] 탭 → 온라인 주문내역 가져오기 (JSON 붙여넣기 / 파일)
-     2) 아래 INITIAL_DATA를 직접 고치고 version을 새 날짜로 바꾼 뒤 [↺ 초기화]
+     1) [가계부]·[냉장고 재고] 탭 → 🛒 쿠팡·이마트 장본 내역 가져오기 (주문내역 복사→붙여넣기)
+     2) [가계부] 탭 → 📂 저장한 기록 불러오기 (동동이가 보내 준 기록 파일)
+     3) 아래 INITIAL_DATA를 직접 고치고 version을 새 날짜로 바꾼 뒤 [↺ 초기화]
    ========================================================================= */
 window.MEAL_DASHBOARD = (function () {
   "use strict";
@@ -996,7 +1067,7 @@ window.MEAL_DASHBOARD = (function () {
   const TABS = ["meals", "inv", "shop", "ledger", "receipt"];
 
   let state = null;
-  const ui = { tab: "meals", invCat: "all", invQuery: "", favOnly: false, editing: null, planOpen: false, weekOpen: false };
+  const ui = { tab: "meals", invCat: "all", invQuery: "", favOnly: false, editing: null, planOpen: false, weekOpen: false, pasteOpen: false };
 
   /* ── 작은 도우미 ─────────────────────────────────────────────────── */
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
@@ -1339,7 +1410,7 @@ window.MEAL_DASHBOARD = (function () {
                 '<button class="me-btn" type="button" data-act="meal-cancel" data-key="' + esc(key) + '">취소</button>' +
                 (edited ? '<button class="me-btn reset" type="button" data-act="meal-reset" data-key="' + esc(key) + '">되돌리기</button>' : "") +
               "</div>" +
-              '<p class="me-hint">저장하면 바로 반영되고 이 기기에 기억돼요. 백업(JSON)에도 함께 담겨요.</p>' +
+              '<p class="me-hint">저장하면 바로 반영되고 이 기기에 기억돼요. 기록 파일에도 함께 담겨요.</p>' +
             "</div>";
         }
         return '<div class="meal-line">' +
@@ -1630,8 +1701,8 @@ window.MEAL_DASHBOARD = (function () {
     document.getElementById("fineprint").innerHTML =
       "<b>품목 금액 합계 " + num(sum) + "원</b>은 주문서에 적힌 품목 가격(오프라인·가져온 내역 포함)을 더한 값이에요. 주문서 상품금액(" +
       num(o.subtotal || o.paid) + "원)과는 차이가 있어요.<br>" +
-      "새 장보기 내역은 <b>가계부 → 주문내역 붙여넣기</b>(품목명·금액)나 <b>온라인 주문내역 가져오기</b>(JSON·파일)로 넣으면 바로 반영돼요.<br>" +
-      "데이터 기준: " + esc(INITIAL_DATA.meta.note);
+      "<b>🛒 쿠팡·이마트 장본 내역 가져오기</b>로 주문내역을 붙여넣으면 냉장고와 가계부에 바로 들어가요.<br>" +
+      "기준: " + esc(INITIAL_DATA.meta.note);
   }
 
   /* ── 탭 ──────────────────────────────────────────────────────────── */
@@ -1825,14 +1896,42 @@ window.MEAL_DASHBOARD = (function () {
      · 수량·상품평·배송완료처럼 금액이 없는 안내 줄 → 버림
      · "품 목\n1,000원" 처럼 이름과 금액이 줄로 나뉜 경우 → 합침
      ─────────────────────────────────────────────────────────────── */
-  const PASTE_DROP = /(합계|소계|총\s*액|총\s*금액|결제\s*금액|상품\s*금액|주문\s*금액|배송비|할인\s*(금액|액)?|쿠폰|적립|포인트|마일리지|예치금|영수증|승인\s*번호|부가세|잔액|내역\s*합계|SSGPAY|카카오페이|네이버페이|삼성페이|현금|계좌이체|카드\s*(결제|청구|승인))/;
-  const PASTE_MILD = /(배송\s*(완료|중|예정|조회)|주문\s*(완료|번호|일자)|구매\s*(완료|확정)|취소|반품|교환|환불|수량|장바구니|담기|상품평|리뷰|평점|별점|후기|더보기|전체\s*보기|옵션|색상|사이즈|무료\s*배송|정렬|필터|검색|로그인|회원|문의|안내|공지|닫기)/;
+  /* ── 붙여넣기에서 걸러 낼 줄 ──────────────────────────────────────
+     쿠팡·이마트몰 주문내역 복사본에는 품목이 아닌 줄이 많이 섞여 있어요.
+     (배송완료·수량·장바구니 담기·리뷰 작성·합계·할인·적립·결제·날짜 등) */
+  const PASTE_DROP = /(합계|소계|총\s*액|총\s*금액|총\s*[0-9,]+\s*(?:원|개|건)|결제|상품\s*금액|주문\s*금액|배송비|할인|쿠폰|적립|포인트|마일리지|예치금|영수증|승인|부가세|잔액|누적|SSGPAY|카카오페이|네이버페이|삼성페이|현금|계좌이체|카드\s*(?:결제|청구|승인|번호)|[0-9]+\s*(?:g|kg|ml|l|개|입|팩|봉|병|캔|포|매|장|구|근|망|단|통|마리|컵)\s*당)/;
+  const PASTE_MILD = /(배송\s*(?:완료|중|예정|조회|출발|준비)|주문\s*(?:완료|번호|일자|상세|내역|목록)|구매\s*(?:완료|확정|내역|목록|평)|취소|반품|교환|환불|수량|장바구니|담기|바로\s*구매|구매하기|상품평|리뷰|평점|별점|후기|더보기|전체\s*보기|옵션|색상|사이즈|무료\s*배송|정렬|필터|검색|로그인|회원|문의|안내|공지|닫기|로켓\s*(?:프레시|배송|직구|와우)|쓱\s*배송|새벽\s*배송|신선\s*식품|가공\s*식품|배송\s*정보|받는\s*사람|배송지|주소|결제\s*수단|판매자|쿠팡|이마트몰|쓱닷컴|마켓컬리|홈플러스)/;
+  /* 품목명이 아니라 화면 머리말·버튼 이름만 있는 줄 */
+  const PASTE_HEADER = /^(?:쿠팡|쿠팡\s*주문|쿠팡\s*주문\s*내역|이마트|이마트몰|SSG|SSGCOM|쓱|쓱닷컴|홈플러스|마켓컬리|컬리|위메프|티몬|주문\s*내역|주문\s*상세|구매\s*내역|장바구니|전체|더보기|닫기|홈|마이\s*쿠팡|배송\s*조회|리뷰\s*작성|장바구니\s*담기|다시\s*담기)$/;
+  /* 규격·무게만 있는 조각 (앞에서 잡아 둔 이름에 붙여요) */
+  const PASTE_SPEC = /^[\d,.\s]*(?:g|kg|ml|L|구|입|팩|봉|봉지|병|캔|포|매|장|근|망|단|통|마리|컵|박스|세트)(?:\s*[×xX*]\s*\d+)?$/i;
+  const PASTE_QTY = /^[\s(\[]*\d[\d,.\s]*(?:개|입|팩|봉|봉지|병|캔|포|매|장|구|근|망|단|통|마리|컵|박스|세트|g|kg|ml|l)?[\s)\]]*$/i;
+
+  /* '1개' '수량 1' '700g' 처럼 이름이 아닌 조각인지 */
+  function pasteIsQty(s) {
+    const v = String(s == null ? "" : s).replace(/\s+/g, " ").trim();
+    if (!v) return true;
+    if (/^(?:수량|qty|주문\s*수량)\s*[:：]?\s*\d+/i.test(v)) return true;
+    if (PASTE_SPEC.test(v)) return true;
+    return PASTE_QTY.test(v);
+  }
+
+  /* 날짜·시간·'도착' 같은 줄인지 */
+  function pasteIsStamp(line) {
+    if (/^\[?\s*(?:web|국제|광고|스팸)\s*발신/i.test(line)) return true;
+    if (/^\d{4}\s*[.\-\/]\s*\d{1,2}\s*[.\-\/]\s*\d{1,2}/.test(line)) return true;
+    if (/^\d{1,2}\s*월\s*\d{1,2}\s*일/.test(line)) return true;
+    if (/^\d{1,2}\s*[.\-\/]\s*\d{1,2}\s*(?:\(?\s*[월화수목금토일]\s*\)?)?\s*(?:도착|완료|배송|$)/.test(line)) return true;
+    if (/^\d{1,2}\s*:\s*\d{2}/.test(line)) return true;
+    if (/^\(?\s*[월화수목금토일]\s*\)?\s*(?:도착|배송|완료)/.test(line)) return true;
+    return false;
+  }
 
   const CAT_WORDS = {
-    snack: ["과자", "스낵", "스넥", "쿠키", "사탕", "젤리", "초콜릿", "초코", "아이스크림", "빙과", "팝콘", "마시멜로", "케이크", "도넛", "와플", "참쌀", "선과", "사브레", "고래밥", "크리치오", "치킨맛", "새우깡", "포카칩", "감자칩", "음료", "주스", "탄산", "콜라", "사이다", "에이드", "마카롱", "푸딩", "양갱", "호떡"],
-    meat: ["한우", "소고기", "쇠고기", "돼지고기", "삼겹살", "삼겹", "목살", "앞다리", "차돌박이", "차돌", "불고기", "닭고기", "닭가슴살", "닭다리", "닭볶음탕", "닭", "계란", "달걀", "알찬란", "메추리알", "메추리", "오리", "베이컨", "소시지", "스팸", "참치", "연어", "고등어", "갈치", "조기", "새우", "오징어", "조개", "홍합", "안심", "등심", "갈비", "장조림", "치킨", "육"],
-    fresh: ["배추", "깻잎", "상추", "양배추", "무우", "감자", "고구마", "대파", "쪽파", "양파", "마늘", "생강", "당근", "버섯", "토마토", "방울", "오이", "무", "파", "배", "감", "애호박", "호박", "가지", "피망", "파프리카", "고추", "브로콜리", "시금치", "콩나물", "숙주", "미나리", "부추", "쑥갓", "청경채", "양상추", "샐러드", "케일", "두부", "순두부", "유부", "바나나", "사과", "과일", "채소", "야채", "귤", "감귤", "오렌지", "포도", "딸기", "수박", "참외", "복숭아", "자두", "키위", "망고", "블루베리", "레몬", "홍시", "석류", "체리", "아보카도", "샤인머스캣", "열무", "총각", "양배추", "미역귀"],
-    pantry: ["라면", "짬뽕", "짜장", "카레", "우동", "국수", "소면", "당면", "파스타", "스파게티", "만두", "떡볶이", "떡", "김치", "단무지", "김", "미역", "다시마", "멸치", "간장", "된장", "고추장", "쌈장", "토장", "소금", "설탕", "식용유", "참기름", "들기름", "후추", "마요네즈", "머스터드", "케첩", "소스", "양념", "육수", "통조림", "우유", "치즈", "요거트", "요플레", "요구르트", "두유", "빵", "베이글", "버터", "가루", "분말", "전분", "쌀", "잡곡", "보리", "현미", "시리얼", "오트밀", "그래놀라", "초밥", "김밥", "반찬", "어묵", "맛살"]
+    snack: ["과자", "스낵", "스넥", "쿠키", "사탕", "젤리", "초콜릿", "초코", "아이스크림", "빙과", "팝콘", "마시멜로", "케이크", "도넛", "와플", "참쌀", "선과", "사브레", "고래밥", "크리치오", "치킨맛", "새우깡", "포카칩", "감자칩", "음료", "주스", "탄산", "콜라", "사이다", "에이드", "마카롱", "푸딩", "양갱", "호떡", "빙수", "젤리", "파이", "약과", "한과"],
+    meat: ["한우", "소고기", "쇠고기", "돼지고기", "삼겹살", "삼겹", "목살", "앞다리", "차돌박이", "차돌", "불고기", "닭고기", "닭가슴살", "닭다리", "닭볶음탕", "닭", "계란", "달걀", "알찬란", "메추리알", "메추리", "오리", "베이컨", "소시지", "스팸", "참치", "연어", "고등어", "갈치", "조기", "새우", "오징어", "조개", "홍합", "안심", "등심", "갈비", "장조림", "치킨", "육", "햄", "비엔나", "떡갈비", "미트볼", "스테이크", "삼겹살", "수육"],
+    fresh: ["배추", "깻잎", "상추", "양배추", "무우", "감자", "고구마", "대파", "쪽파", "양파", "마늘", "생강", "당근", "버섯", "토마토", "방울", "오이", "무", "파", "배", "감", "애호박", "호박", "가지", "피망", "파프리카", "고추", "브로콜리", "시금치", "콩나물", "숙주", "미나리", "부추", "쑥갓", "청경채", "양상추", "샐러드", "케일", "두부", "순두부", "유부", "바나나", "사과", "과일", "채소", "야채", "귤", "감귤", "오렌지", "포도", "딸기", "수박", "참외", "복숭아", "자두", "키위", "망고", "블루베리", "레몬", "홍시", "석류", "체리", "아보카도", "샤인머스캣", "열무", "총각", "양배추", "미역귀", "연근", "우엉", "셀러리", "아스파라거스", "양송이", "새송이", "표고", "느타리", "팽이버섯", "청양", "자몽", "라임", "코코넛", "베리"],
+    pantry: ["라면", "짬뽕", "짜장", "카레", "우동", "국수", "소면", "당면", "파스타", "스파게티", "만두", "떡볶이", "떡", "김치", "단무지", "김", "미역", "다시마", "멸치", "간장", "된장", "고추장", "쌈장", "토장", "소금", "설탕", "식용유", "참기름", "들기름", "후추", "마요네즈", "머스터드", "케첩", "소스", "양념", "육수", "통조림", "우유", "치즈", "요거트", "요플레", "요구르트", "두유", "빵", "베이글", "버터", "가루", "분말", "전분", "쌀", "잡곡", "보리", "현미", "시리얼", "오트밀", "그래놀라", "초밥", "김밥", "반찬", "어묵", "맛살", "교자", "즉석밥", "햇반", "컵밥", "생수", "탄산수", "드레싱", "꿀", "잼", "시럽", "식초", "고춧가루", "참깨", "깨소금", "견과", "아몬드", "호두", "오일", "국물"]
   };
   const CAT_EXACT = { "무": "fresh", "배": "fresh", "감": "fresh", "파": "fresh", "김": "pantry", "계란": "meat", "달걀": "meat", "우유": "pantry", "두부": "fresh" };
 
@@ -1875,36 +1974,57 @@ window.MEAL_DASHBOARD = (function () {
 
   function cleanPasteName(s) {
     return String(s || "")
-      .replace(/\b수량\s*\d+\s*(개|입|팩|봉)?/g, " ")
-      .replace(/무료\s*배송|배송\s*완료|장바구니\s*담기|상품평|리뷰|바로\s*구매|별점|평점/g, " ")
+      .replace(/\[[^\]]{1,16}\]/g, " ")                                   /* [로켓프레시] 같은 딱지 */
+      .replace(/(?:수량|qty)\s*[:：]?\s*\d+\s*(?:개|입|팩|봉)?/gi, " ")
+      .replace(/총\s*\d+\s*(?:개|입|팩|봉|건)\.?/g, " ")
+      .replace(/(?:x|×|\*)\s*\d+(?=\s|$)/gi, " ")
+      .replace(/(?:무료\s*배송|장바구니\s*담기|장바구니|다시\s*담기|바로\s*구매|구매하기|상품평|리뷰\s*작성|리뷰|별점|평점|판매자|옵션|색상|사이즈|더보기|특가|세일)/g, " ")
+      .replace(/\(\s*\d+\s*(?:개|입|팩|봉|병)\s*\)/g, " ")
       .replace(/\s{2,}/g, " ")
-      .replace(/^[\s:=·•*|>\-]+/, "")
-      .replace(/[\s:=·•*|>\-]+$/, "")
+      .replace(/^[\s:=·•*|><\-,]+/, "")
+      .replace(/[\s:=·•*|><\-,]+$/, "")
       .replace(/\s*원$/, "")
       .trim();
   }
 
-  /* 붙여넣은 글 → [{name, cat, price}] */
+  /* 붙여넣은 글 → [{name, cat, price}]
+     · 줄바꿈·탭·' / '·' | '·쉼표로 나눈 입력을 모두 받아요.
+     · 이름과 금액이 위아래 줄로 나뉜 주문내역은 앞 줄의 이름을 기억해 붙여요. */
   function parseOrderText(raw) {
     const out = [];
-    const segs = String(raw == null ? "" : raw).split(/\r?\n|\t|\s+\/\s+|\s+\|\s+/);
+    const text = String(raw == null ? "" : raw)
+      .replace(/\u00a0/g, " ")
+      .replace(/[\u200b\u200e\u200f]/g, "");
+    const segs = text.split(/\r?\n|\t|\s+\/\s+|\s+\|\s+|\s*[;；]\s*|\s*,\s*(?![0-9])/);
     let pending = "";
     segs.forEach(function (seg) {
-      const line = String(seg).replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+      const line = String(seg)
+        .replace(/^\s*(?:\[[^\]]{1,16}\]\s*)+/, "")     /* [로켓프레시] 딱지는 떼고 봐요 */
+        .replace(/\s+/g, " ").trim();
       if (!line) { pending = ""; return; }
       if (PASTE_DROP.test(line)) { pending = ""; return; }
       const pick = pastePriceIn(line);
       if (!pick) {
-        if (PASTE_MILD.test(line)) { pending = ""; return; }
+        if (PASTE_MILD.test(line) || PASTE_HEADER.test(line) || pasteIsStamp(line)) { pending = ""; return; }
         const only = cleanPasteName(line);
-        pending = (/[가-힣A-Za-z]/.test(only) && only.length <= 60) ? only : "";
+        if (!only) { pending = ""; return; }
+        if (PASTE_SPEC.test(only)) {                        /* '700g' '30구'는 앞 이름에 붙여요 */
+          if (pending && pending.length + only.length <= 60) pending = pending + " " + only;
+          return;
+        }
+        if (pasteIsQty(only) || !/[가-힣A-Za-z]/.test(only) || only.length > 60) { pending = ""; return; }
+        pending = only;
         return;
       }
       const parts = line.split(" ");
       const nameRaw = cleanPasteName(parts.filter(function (t, i) { return i !== pick.idx; }).join(" "));
-      const name = nameRaw || pending;
+      let name = nameRaw;
+      if (!name || pasteIsQty(name) || !/[가-힣A-Za-z]/.test(name)) name = "";
+      if (!name) name = pending;
       pending = "";
       if (!name || !/[가-힣A-Za-z]/.test(name)) return;
+      const dup = out.some(function (r) { return r.name === name && r.price === pick.value; });
+      if (dup) return;
       out.push({ name: name, price: pick.value, cat: guessCat(name) });
     });
     return out;
@@ -1927,14 +2047,16 @@ window.MEAL_DASHBOARD = (function () {
     let total = 0;
     sel.forEach(function (r) { total += Number(r.price) || 0; });
     btn.disabled = !sel.length;
-    btn.textContent = sel.length ? sel.length + "건 한 번에 담기 (" + num(total) + "원)" : "담을 품목을 선택하세요";
+    btn.textContent = sel.length
+      ? "냉장고 + 가계부에 " + sel.length + "건 한 번에 넣기 (" + num(total) + "원)"
+      : "냉장고와 가계부에 넣을 품목을 찾아 주세요";
   }
   function renderPastePreview() {
     const box = document.getElementById("pastePreview");
     if (!box) return;
     if (!pasteRows.length) { box.innerHTML = ""; updatePasteAddLabel(); return; }
     box.innerHTML =
-      '<p class="paste-note">찾은 품목 ' + pasteRows.length + "건 · 체크를 풀거나 이름·분류·금액을 고칠 수 있어요</p>" +
+      '<p class="paste-note">찾은 품목 ' + pasteRows.length + "건 · 넣지 않을 줄은 체크를 풀고, 이름·분류·금액은 눌러서 고칠 수 있어요</p>" +
       pasteRows.map(function (r, i) {
         return '<div class="paste-row' + (r.on ? "" : " off") + '" data-idx="' + i + '">' +
             '<input type="checkbox" data-paste="on" data-idx="' + i + '"' + (r.on ? " checked" : "") + ' aria-label="' + esc(r.name) + ' 담기">' +
@@ -1960,15 +2082,49 @@ window.MEAL_DASHBOARD = (function () {
     if (el.parentNode && el.parentNode.classList) el.parentNode.classList.toggle("off", !row.on);
     updatePasteAddLabel();
   }
+  function openPasteSheet() {
+    const ov = document.getElementById("pasteOverlay");
+    if (ov) { ov.classList.add("on"); ov.setAttribute("aria-hidden", "false"); }
+    ui.pasteOpen = true;
+    if (document.body && document.body.style) document.body.style.overflow = "hidden";
+    const dateEl = document.getElementById("pasteDate");
+    if (dateEl && !dateEl.value) dateEl.value = todayISO();
+  }
+  function closePasteSheet() {
+    const ov = document.getElementById("pasteOverlay");
+    if (ov) { ov.classList.remove("on"); ov.setAttribute("aria-hidden", "true"); }
+    ui.pasteOpen = false;
+    if (document.body && document.body.style) document.body.style.overflow = "";
+  }
+  /* 구매처 칩 — 누르면 칩 표시와 구매처 값이 함께 바뀌어요 */
+  function setPasteStore(store) {
+    const name = cleanLine(store || "") || "마트·기타";
+    const input = document.getElementById("pasteStore");
+    if (input) input.value = name;
+    const chips = document.querySelectorAll ? document.querySelectorAll("#pasteStoreChips .store-chip") : [];
+    for (let i = 0; i < chips.length; i++) {
+      chips[i].classList.toggle("on", chips[i].getAttribute("data-store") === name);
+    }
+    return name;
+  }
+  function togglePasteExample() {
+    const box = document.getElementById("pasteExample");
+    if (!box) return false;
+    const show = !!box.hidden;
+    box.hidden = !show;
+    return show;
+  }
   function pasteParse() {
     const area = document.getElementById("pasteArea");
     const found = parseOrderText(area ? area.value : "");
     pasteRows = found.map(function (r) { return { on: true, name: r.name, cat: r.cat, price: r.price }; });
     renderPastePreview();
     if (!pasteRows.length) {
-      setStatus("pasteStatus", "품목을 찾지 못했어요. '품목명 금액' 형태의 줄이 있는지 확인해 주세요.", false);
+      setStatus("pasteStatus", "품목을 찾지 못했어요. 상품 이름과 금액이 함께 있는 줄이 있는지 확인해 주세요.", false);
     } else {
-      setStatus("pasteStatus", pasteRows.length + "건을 찾았어요. 미리보기를 확인한 뒤 한 번에 담아 주세요.", true);
+      let total = 0;
+      pasteRows.forEach(function (r) { total += Number(r.price) || 0; });
+      setStatus("pasteStatus", pasteRows.length + "건을 찾았어요 (합계 " + num(total) + "원). 확인한 뒤 아래 버튼을 눌러 주세요.", true);
     }
     return pasteRows.length;
   }
@@ -1986,7 +2142,7 @@ window.MEAL_DASHBOARD = (function () {
     const storeEl = document.getElementById("pasteStore");
     const dateEl = document.getElementById("pasteDate");
     const dupEl = document.getElementById("pasteSkipDup");
-    const store = cleanLine(storeEl ? storeEl.value : "") || "주문내역 붙여넣기";
+    const store = cleanLine(storeEl ? storeEl.value : "") || "장본 내역";
     const date = (dateEl && dateEl.value) ? dateEl.value : todayISO();
     const skipDup = dupEl ? !!dupEl.checked : true;
     const existing = {};
@@ -2005,15 +2161,15 @@ window.MEAL_DASHBOARD = (function () {
       added++;
     });
     state.importedOrders.push({
-      id: uid("o"), store: store, date: date, label: shortDate(date) + " 붙여넣기",
+      id: uid("o"), store: store, date: date, label: "가져온 장본",
       count: rows.length, paid: total
     });
     saveState();
     pasteRows = [];
     renderPastePreview();
     renderAll();
-    setStatus("pasteStatus", "구매내역에 1건(" + num(total) + "원 · " + rows.length + "품목)으로 담고, 냉장고에 " + added + "개를 넣었어요" + (skipped ? " (이미 있던 " + skipped + "개는 재고만 유지)" : "") + ".", true);
-    toast("붙여넣은 주문을 담았어요");
+    setStatus("pasteStatus", "가계부에 1줄(" + num(total) + "원 · " + rows.length + "품목)로 넣고, 냉장고에 " + added + "개를 채웠어요" + (skipped ? " (이미 있던 " + skipped + "개는 재고 그대로)" : "") + ".", true);
+    toast("장본 내역을 넣었어요");
     return { added: added, skipped: skipped, total: total };
   }
 
@@ -2053,7 +2209,7 @@ window.MEAL_DASHBOARD = (function () {
   function importData(raw, mode) {
     let obj;
     try { obj = JSON.parse(raw); }
-    catch (e) { setStatus("importStatus", "JSON 형식이 아니에요. 내용을 다시 확인해 주세요.", false); return false; }
+    catch (e) { setStatus("importStatus", "저장해 둔 기록 파일이 아니에요. [📂 저장한 기록 불러오기]에서 다시 골라 주세요.", false); return false; }
 
     let payload = obj;
     let full = false;
@@ -2062,7 +2218,7 @@ window.MEAL_DASHBOARD = (function () {
       full = true;
     }
     if (!payload || typeof payload !== "object") {
-      setStatus("importStatus", "가져올 데이터가 비어 있어요.", false);
+      setStatus("importStatus", "이 파일에는 되살릴 기록이 없어요.", false);
       return false;
     }
 
@@ -2070,7 +2226,7 @@ window.MEAL_DASHBOARD = (function () {
     const items = normalizeItems(payload.inventory || payload.items);
 
     if (!order && !items.length && !full) {
-      setStatus("importStatus", "주문 요약(order) 또는 품목(inventory)이 있는 JSON이 필요해요.", false);
+      setStatus("importStatus", "되살릴 장보기 기록을 찾지 못했어요. 동동이가 보내 준 파일인지 확인해 주세요.", false);
       return false;
     }
 
@@ -2097,7 +2253,7 @@ window.MEAL_DASHBOARD = (function () {
         if (Array.isArray(payload.purged)) state.purged = payload.purged;
         if (payload.purgedValue != null) state.purgedValue = Number(payload.purgedValue) || 0;
       }
-      setStatus("importStatus", "덮어썼어요 · 주문 " + (order ? "1건" : "유지") + ", 품목 " + num(items.length) + "건 반영", true);
+      setStatus("importStatus", "저장한 기록으로 되살렸어요 · 주문 " + (order ? "1건" : "그대로") + ", 품목 " + num(items.length) + "건", true);
     } else {
       if (order) {
         state.importedOrders.push({
@@ -2115,7 +2271,7 @@ window.MEAL_DASHBOARD = (function () {
           added++;
         }
       });
-      setStatus("importStatus", "합쳤어요 · 주문 " + (order ? "1건 추가" : "없음") + ", 새 품목 " + num(added) + "건 (중복 제외)", true);
+      setStatus("importStatus", "지금 기록에 더했어요 · 주문 " + (order ? "1건 추가" : "없음") + ", 새 품목 " + num(added) + "건 (이미 있던 품목은 빼고)", true);
     }
     saveState();
     ui.editing = null;
@@ -2144,43 +2300,39 @@ window.MEAL_DASHBOARD = (function () {
   }
   function doExport() {
     const json = JSON.stringify(exportPayload(), null, 2);
-    document.getElementById("exportArea").value = json;
-    setStatus("exportStatus", "JSON을 만들었어요 (" + num(json.length) + "자). 복사하거나 파일로 저장하세요.", true);
+    const area = document.getElementById("exportArea");
+    if (area) area.value = json;
+    setStatus("exportStatus", "기록 파일을 만들었어요 (" + num(json.length) + "자).", true);
     return json;
   }
-  function copyExport() {
-    const json = document.getElementById("exportArea").value || doExport();
-    const area = document.getElementById("exportArea");
-    let done = false;
-    if (window.navigator && window.navigator.clipboard && window.navigator.clipboard.writeText) {
-      window.navigator.clipboard.writeText(json).then(function () {
-        toast("복사됐어요! 동동이 채팅방에 붙여넣기 해주세요");
-        setStatus("exportStatus", "클립보드에 복사했어요.", true);
-      }, function () { /* 실패 시 수동 복사 유도 */ setStatus("exportStatus", "복사 권한이 없어요. 상자의 내용을 길게 눌러 직접 복사해 주세요.", false); });
-      return;
-    }
-    try {
-      area.focus(); area.select();
-      done = window.document.execCommand && window.document.execCommand("copy");
-    } catch (e) { done = false; }
-    setStatus("exportStatus", done ? "클립보드에 복사했어요." : "상자의 내용을 길게 눌러 직접 복사해 주세요.", done);
-  }
+  /* 내 기록 파일로 저장 — 휴대폰 '파일' 앱에 내려받아 두면 나중에 그대로 되살릴 수 있어요 */
   function downloadExport() {
-    const json = document.getElementById("exportArea").value || doExport();
+    const json = doExport();
+    const name = "우리집-식단-기록-" + todayISO() + ".json";
     try {
       const blob = new window.Blob([json], { type: "application/json" });
       const url = window.URL.createObjectURL(blob);
       const a = window.document.createElement("a");
       a.href = url;
-      a.download = "meal-dashboard-" + todayISO() + ".json";
+      a.download = name;
       window.document.body.appendChild(a);
       a.click();
       window.document.body.removeChild(a);
       setTimeout(function () { window.URL.revokeObjectURL(url); }, 500);
-      setStatus("exportStatus", "파일로 저장했어요.", true);
+      setStatus("exportStatus", "내 기록 파일(" + name + ")을 저장했어요 · 폰의 '파일' 앱에서 찾을 수 있어요.", true);
     } catch (e) {
-      setStatus("exportStatus", "이 환경에서는 파일 저장이 안 돼요. 내용을 복사해 보세요.", false);
+      setStatus("exportStatus", "이 브라우저에서는 파일 저장이 안 돼요. 동동이에게 '기록 저장해 줘'라고 말씀해 주세요.", false);
     }
+  }
+  /* 저장한 기록 파일 되살리기 — 지금 화면의 기록을 바꾸기 전에 한 번 물어봐요 */
+  function restoreFromFile(raw) {
+    const has = state.custom.length || state.importedOrders.length || (state.shop && state.shop.length) ||
+      Object.keys(state.mealEdits || {}).length;
+    if (has && window.confirm && !window.confirm("지금 화면의 식단·냉장고 기록을 저장한 기록으로 바꿀까요? 지금 기록은 사라져요.")) {
+      setStatus("importStatus", "그대로 두었어요.", true);
+      return false;
+    }
+    return importData(raw, "overwrite");
   }
   /* ── 이마트몰 장바구니 요청 복사 ─────────────────────────────────── */
   let toastTimer = null;
@@ -2778,17 +2930,16 @@ window.MEAL_DASHBOARD = (function () {
     else if (act === "shop-clear") { clearDoneShop(); }
     else if (act === "cart-copy") { copyCart(); }
     else if (act === "order-del") { deleteOrder(el.getAttribute("data-id")); }
-    else if (act === "import-json") {
-      const area = document.getElementById("importArea");
-      importData(area.value, (document.querySelector('input[name="importMode"]:checked') || {}).value || "merge");
-    }
     else if (act === "import-file") { document.getElementById("importFile").click(); }
     else if (act === "export-json") { doExport(); }
+    else if (act === "export-file") { downloadExport(); }
+    else if (act === "paste-open") { openPasteSheet(); }
+    else if (act === "paste-close") { closePasteSheet(); }
+    else if (act === "paste-store") { setPasteStore(el.getAttribute("data-store")); }
+    else if (act === "paste-example") { togglePasteExample(); }
     else if (act === "paste-preview") { pasteParse(); }
     else if (act === "paste-add") { addPasteAll(); }
     else if (act === "paste-del") { delPasteRow(Number(el.getAttribute("data-idx"))); }
-    else if (act === "export-copy") { copyExport(); }
-    else if (act === "export-file") { downloadExport(); }
     else if (act === "plan-open") { openPlanSheet(); }
     else if (act === "plan-close") { closePlanSheet(); }
     else if (act === "plan-empty") { applyPlanToMeals("empty"); }
@@ -2813,6 +2964,7 @@ window.MEAL_DASHBOARD = (function () {
       if (!e || e.key !== "Escape") return;
       if (ui.planOpen) closePlanSheet();
       if (ui.weekOpen) closeWeekSheet();
+      if (ui.pasteOpen) closePasteSheet();
     });
 
     const search = document.getElementById("invSearch");
@@ -2880,7 +3032,7 @@ window.MEAL_DASHBOARD = (function () {
         if (!f) return;
         const reader = new window.FileReader();
         reader.onload = function () {
-          importData(String(reader.result || ""), (document.querySelector('input[name="importMode"]:checked') || {}).value || "merge");
+          restoreFromFile(String(reader.result || ""));
         };
         reader.readAsText(f);
         e.target.value = "";
@@ -2894,13 +3046,12 @@ window.MEAL_DASHBOARD = (function () {
       pasteBox.addEventListener("change", onPasteEdit);
     }
 
-    const seg = document.getElementById("importMode");
-    if (seg) {
-      seg.addEventListener("change", function () {
-        const labels = seg.querySelectorAll("label");
-        for (let i = 0; i < labels.length; i++) {
-          labels[i].classList.toggle("on", labels[i].querySelector("input").checked);
-        }
+    /* 주문내역을 붙여넣으면 곧바로 품목을 찾아 미리 보여 줘요 */
+    const pasteAreaEl = document.getElementById("pasteArea");
+    if (pasteAreaEl && pasteAreaEl.addEventListener) {
+      pasteAreaEl.addEventListener("paste", function () {
+        if (window.setTimeout) window.setTimeout(function () { pasteParse(); }, 60);
+        else pasteParse();
       });
     }
 
@@ -2921,6 +3072,11 @@ window.MEAL_DASHBOARD = (function () {
     pasteParse: pasteParse,
     addPasteAll: addPasteAll,
     pasteRows: function () { return pasteRows; },
+    openPaste: openPasteSheet,
+    closePaste: closePasteSheet,
+    setPasteStore: setPasteStore,
+    togglePasteExample: togglePasteExample,
+    restoreFromFile: restoreFromFile,
     getState: function () { return state; },
     openPlan: openPlanSheet,
     closePlan: closePlanSheet,
