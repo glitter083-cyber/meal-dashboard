@@ -2050,7 +2050,15 @@ window.MEAL_DASHBOARD = (function () {
     const area = document.getElementById("pasteArea");
     const found = parseOrderText(area ? area.value : "");
     pasteRows = found.map(function (r) { return { on: true, name: r.name, cat: r.cat, price: r.price }; });
+    if (pasteRows.length) {
+      const ex = document.getElementById("pasteExample");
+      if (ex && ex.hidden === false) ex.hidden = true;      /* 예시는 접어 두고 결과를 보여 줘요 */
+    }
     renderPastePreview();
+    const preview = document.getElementById("pastePreview");
+    if (pasteRows.length && preview && preview.scrollIntoView) {
+      try { preview.scrollIntoView({ block: "nearest" }); } catch (e) { /* 스크롤 불가 시 무시 */ }
+    }
     if (!pasteRows.length) {
       setStatus("pasteStatus", "품목을 찾지 못했어요. 상품 이름과 금액이 함께 있는 줄이 있는지 확인해 주세요.", false);
     } else {
@@ -2178,6 +2186,7 @@ window.MEAL_DASHBOARD = (function () {
         if (payload.meals) state.meals = payload.meals;
         if (payload.out) state.out = payload.out;
         if (Array.isArray(payload.custom)) state.custom = payload.custom;
+        if (Array.isArray(payload.importedOrders)) state.importedOrders = payload.importedOrders;
         if (Array.isArray(payload.offline)) state.offline = payload.offline;
         if (Array.isArray(payload.favs)) state.favs = payload.favs;
         if (isISODate(payload.weekStart)) state.weekStart = payload.weekStart;
