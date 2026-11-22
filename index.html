@@ -503,6 +503,13 @@
   }
   .paste-card textarea.data-area{min-height:104px}
   .paste-card .plan-actions{margin-top:14px}
+  /* 아이폰처럼 좁은 화면에서는 품목명이 잘리지 않게 칸 폭을 줄여요 */
+  @media (max-width:430px){
+    .paste-row{gap:4px}
+    .paste-row .pv-name{font-size:12px;padding:8px 6px}
+    .paste-row .pv-cat{flex:0 0 62px;font-size:11px;padding:8px 2px}
+    .paste-row .pv-price{flex:0 0 72px;font-size:12px}
+  }
   .order-row{
     display:flex;align-items:flex-start;gap:9px;
     padding:12px 2px;border-top:1px solid #F6EDE3;
@@ -2085,6 +2092,8 @@ window.MEAL_DASHBOARD = (function () {
   function openPasteSheet() {
     const ov = document.getElementById("pasteOverlay");
     if (ov) { ov.classList.add("on"); ov.setAttribute("aria-hidden", "false"); }
+    const sheet = document.getElementById("pasteSheet");
+    if (sheet) { try { sheet.scrollTop = 0; } catch (e) { /* 스크롤 불가 시 무시 */ } }
     ui.pasteOpen = true;
     if (document.body && document.body.style) document.body.style.overflow = "hidden";
     const dateEl = document.getElementById("pasteDate");
@@ -2174,6 +2183,8 @@ window.MEAL_DASHBOARD = (function () {
     });
     saveState();
     pasteRows = [];
+    const areaEl = document.getElementById("pasteArea");
+    if (areaEl) areaEl.value = "";      /* 같은 주문을 두 번 담지 않도록 칸을 비워요 */
     renderPastePreview();
     renderAll();
     setStatus("pasteStatus", "가계부에 1줄(" + num(total) + "원 · " + rows.length + "품목)로 넣고, 냉장고에 " + added + "개를 채웠어요" + (skipped ? " (이미 있던 " + skipped + "개는 재고 그대로)" : "") + ".", true);
